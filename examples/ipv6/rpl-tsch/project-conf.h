@@ -84,6 +84,10 @@
 #undef SYS_CTRL_CONF_OSC32K_USE_XTAL
 #define SYS_CTRL_CONF_OSC32K_USE_XTAL 1
 
+/* Needed for IoT-LAB M3 nodes */
+#undef RF2XX_SOFT_PREPARE
+#define RF2XX_SOFT_PREPARE 0
+
 /* Needed for cc2420 platforms only */
 /* Disable DCO calibration (uses timerB) */
 #undef DCOSYNCH_CONF_ENABLED
