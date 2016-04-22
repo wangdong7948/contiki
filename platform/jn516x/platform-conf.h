@@ -53,12 +53,55 @@
 #define MIRCOMAC_CONF_BUF_NUM 2
 #endif
 
+#ifdef RF_CHANNEL
+#define MICROMAC_CONF_CHANNEL RF_CHANNEL
+#endif
+
 #ifndef MICROMAC_CONF_CHANNEL
 #define MICROMAC_CONF_CHANNEL 26
 #endif
+/* 32kHz or 16MHz rtimers? */
+#ifdef RTIMER_CONF_USE_32KHZ
+#define RTIMER_USE_32KHZ  RTIMER_CONF_USE_32KHZ
+#else
+#define RTIMER_USE_32KHZ  0
+#endif
 
-#ifdef RF_CHANNEL
-#define MICROMAC_CONF_CHANNEL RF_CHANNEL
+/* Put the device in a sleep mode in idle periods?
+ * If RTIMER_USE_32KHZ is set, the device runs all the time on the 32 kHz oscillator.
+ * If RTIMER_USE_32KHZ is not set, the device runs on the 32 kHz oscillator during sleep,
+ * and switches back to the 32 MHz oscillator (16 MHz rtimer) at wakeup.
+ *  */
+#ifdef JN516X_SLEEP_CONF_ENABLED
+#define JN516X_SLEEP_ENABLED JN516X_SLEEP_CONF_ENABLED
+#else
+#define JN516X_SLEEP_ENABLED 0
+#endif
+
+/* Enable this to get the 32.768kHz oscillator */
+#ifndef JN516X_EXTERNAL_CRYSTAL_OSCILLATOR
+#define JN516X_EXTERNAL_CRYSTAL_OSCILLATOR (RTIMER_USE_32KHZ || JN516X_SLEEP_ENABLED)
+#endif /* JN516X_EXTERNAL_CRYSTAL_OSCILLATOR */
+
+/* Core rtimer.h defaults to 16 bit timer unless RTIMER_CLOCK_DIFF is defined */
+typedef uint32_t rtimer_clock_t;
+#define RTIMER_CLOCK_DIFF(a, b)     ((int32_t)((a) - (b)))
+
+/* 8ms timer tick */
+#define CLOCK_CONF_SECOND 125
+
+#if JN516X_EXTERNAL_CRYSTAL_OSCILLATOR
+#define JN516X_XOSC_SECOND 32768
+#else
+#define JN516X_XOSC_SECOND 32000
+#endif
+
+/* Timer conversion*/
+#if RTIMER_USE_32KHZ
+#define RADIO_TO_RTIMER(X)  ((X) * (JN516X_XOSC_SECOND) / 62500)
+#else
+ /* RTIMER 16M = 256 * 62500(RADIO)  == 2^8 * 62500 */
+#define RADIO_TO_RTIMER(X)  ((rtimer_clock_t)((X) << (int32_t)8L))
 #endif
 
 /* Timer conversion
