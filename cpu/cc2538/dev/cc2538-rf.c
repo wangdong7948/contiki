@@ -740,7 +740,7 @@ read(void *buf, unsigned short bufsize)
     }
   }
 
-  return (len);
+  return len;
 }
 /*---------------------------------------------------------------------------*/
 static int
