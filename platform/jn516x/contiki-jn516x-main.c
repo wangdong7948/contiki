@@ -142,6 +142,7 @@ init_node_mac(void)
 {
   tuAddr psExtAddress;
   vMMAC_GetMacAddress(&psExtAddress.sExt);
+#if LINKADDR_SIZE == 8
   node_mac[7] = psExtAddress.sExt.u32L;
   node_mac[6] = psExtAddress.sExt.u32L >> (uint32_t)8;
   node_mac[5] = psExtAddress.sExt.u32L >> (uint32_t)16;
@@ -150,6 +151,10 @@ init_node_mac(void)
   node_mac[2] = psExtAddress.sExt.u32H >> (uint32_t)8;
   node_mac[1] = psExtAddress.sExt.u32H >> (uint32_t)16;
   node_mac[0] = psExtAddress.sExt.u32H >> (uint32_t)24;
+#elif LINKADDR_SIZE == 2
+  node_mac[1] = psExtAddress.sExt.u32L;
+  node_mac[0] = psExtAddress.sExt.u32L >> (uint32_t)8;
+#endif
 }
 /*---------------------------------------------------------------------------*/
 #if !PROCESS_CONF_NO_PROCESS_NAMES
@@ -245,19 +250,8 @@ set_linkaddr(void)
 {
   int i;
   linkaddr_t addr;
-  memset(&addr, 0, LINKADDR_SIZE);
-#if NETSTACK_CONF_WITH_IPV6
+  /*memset(&addr, 0, LINKADDR_SIZE);*/
   memcpy(addr.u8, node_mac, sizeof(addr.u8));
-#else
-  if(node_id == 0) {
-    for(i = 0; i < LINKADDR_SIZE; ++i) {
-      addr.u8[i] = node_mac[LINKADDR_SIZE - 1 - i];
-    }
-  } else {
-    addr.u8[0] = node_id & 0xff;
-    addr.u8[1] = node_id >> 8;
-  }
-#endif
   linkaddr_set_node_addr(&addr);
 #if DEBUG
   PRINTF("Link-layer address: ");
