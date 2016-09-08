@@ -39,6 +39,9 @@
 #define NO_DEBUG_HEADER
 #include "lib/debug.h"
 
+static rtimer_clock_t currently_scheduled;
+static void rtimer_arch_schedule_current();
+
 /*
  * rtimer is mapped on the soft_timer
  */
@@ -50,36 +53,69 @@
 
 void rtimer_arch_init(void)
 {
-    /* timer is already started in agilefox_drivers.c */
-    log_debug("rtimer_arch_init() called");
-    // ensure lowest priority so that rtimer tasks can be interrupted
-    nvic_set_priority(RTIMER_IRQ_LINE, 0xff);
+  /* timer is already started in agilefox_drivers.c */
+  log_debug("rtimer_arch_init() called");
+  // ensure lowest priority so that rtimer tasks can be interrupted
+  nvic_set_priority(RTIMER_IRQ_LINE, 0xff);
 }
 
 /*-----------------------------------------------------------------------------------*/
 
-rtimer_clock_t rtimer_arch_now(void)
+rtimer_clock_t
+rtimer_arch_now(void)
 {
-    return timer_time( RTIMER_TIMER );
+  return soft_timer_time();
 }
 
 /*-----------------------------------------------------------------------------------*/
 
-static void rtimer_cb( handler_arg_t arg, uint16_t value )
+static void rtimer_cb(handler_arg_t arg, uint16_t value)
 {
-    (void) value;
+  (void) value;
 
-    ENERGEST_ON(ENERGEST_TYPE_IRQ);
-    timer_set_channel_compare( RTIMER_TIMER, RTIMER_CHANNEL, 0, NULL, NULL );
+  ENERGEST_ON(ENERGEST_TYPE_IRQ);
+
+  if(currently_scheduled == 0) { /* Timer expired */
     rtimer_run_next();
-    ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+  } else {
+    rtimer_arch_schedule_current();
+  }
+
+  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+}
+
+/*---------------------------------------------------------------------------*/
+static void
+rtimer_arch_schedule_current(void)
+{
+  uint16_t target;
+  rtimer_clock_t now = RTIMER_NOW();
+
+  if(currently_scheduled == 0) {
+    return;
+  }
+
+  if(RTIMER_CLOCK_LT(currently_scheduled, now + 1)) {
+    rtimer_run_next();
+    return;
+  }
+
+  if(RTIMER_CLOCK_DIFF(currently_scheduled, now) & 0xffff0000) { /* Cannot be scheduled yet */
+    target = now & 0xffff; /* Wait for next wrap */
+    timer_set_channel_compare(RTIMER_TIMER, RTIMER_CHANNEL, target, rtimer_cb, NULL);
+  } else { /* Can be scheduled now */
+    target = currently_scheduled & 0xffff;
+    currently_scheduled = 0;
+    timer_set_channel_compare(RTIMER_TIMER, RTIMER_CHANNEL, target, rtimer_cb, NULL);
+  }
+
 }
 
 void rtimer_arch_schedule(rtimer_clock_t t)
 {
-    timer_set_channel_compare( RTIMER_TIMER, RTIMER_CHANNEL, t, rtimer_cb, NULL );
+  currently_scheduled = t;
+  rtimer_arch_schedule_current();
 }
 
 /*-----------------------------------------------------------------------------------*/
-
 
