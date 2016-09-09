@@ -32,6 +32,8 @@
 
 #define RTIMER_ARCH_SECOND (SOFT_TIMER_FREQUENCY)
 
+#if RTIMER_ARCH_SECOND == 32768
+
 /* Do the math in 32bits to save precision.
  * Round to nearest integer rather than truncate. */
 #define US_TO_RTIMERTICKS(US)  ((US) >= 0 ?                        \
@@ -45,6 +47,54 @@
 /* A 64-bit version because the 32-bit one cannot handle T >= 4295 ticks.
    Intended only for positive values of T. */
 #define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
+
+#elif RTIMER_ARCH_SECOND == 500000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) >> 1)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) << 1)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 1000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D))
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T))
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 2000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) << 1)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) >> 1)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 4000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) << 2)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) >> 2)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 8000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) << 3)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) >> 3)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 16000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) << 4)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) >> 4)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#elif RTIMER_ARCH_SECOND == 32000000L
+
+#define US_TO_RTIMERTICKS(D)    ((int64_t)(D) << 5)
+#define RTIMERTICKS_TO_US(T)    ((int64_t)(T) >> 5)
+#define RTIMERTICKS_TO_US_64(T) RTIMERTICKS_TO_US(T)
+
+#else /* RTIMER_ARCH_SECOND */
+
+#error Unsuported RTIMER_ARCH_SECOND
+
+#endif /* RTIMER_ARCH_SECOND */
 
 /*
  * Contiki support functions

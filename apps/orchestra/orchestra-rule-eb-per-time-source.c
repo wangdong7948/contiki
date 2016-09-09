@@ -76,20 +76,29 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
 {
   uint16_t old_ts = get_node_timeslot(&old->addr);
   uint16_t new_ts = get_node_timeslot(&new->addr);
+  uint16_t my_ts = get_node_timeslot(&linkaddr_node_addr);
 
-  if(new_ts == old_ts) {
+  if(old != NULL && new_ts == old_ts) {
     return;
   }
 
   if(old_ts != 0xffff) {
     /* Stop listening to the old time source's EBs */
-    tsch_schedule_remove_link_by_timeslot(sf_eb, old_ts);
+    if(old_ts != my_ts) {
+      tsch_schedule_remove_link_by_timeslot(sf_eb, old_ts);
+    } else {
+      tsch_schedule_add_link(sf_eb,
+                             LINK_OPTION_TX,
+                             LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
+                             my_ts, 0);
+    }
   }
   if(new_ts != 0xffff) {
+    uint8_t link_options = (new_ts == my_ts) ? LINK_OPTION_TX | LINK_OPTION_RX : LINK_OPTION_RX;
     /* Listen to the time source's EBs */
     tsch_schedule_add_link(sf_eb,
-                           LINK_OPTION_RX,
-                           LINK_TYPE_ADVERTISING_ONLY, NULL,
+                           link_options,
+                           LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
                            new_ts, 0);
   }
 }

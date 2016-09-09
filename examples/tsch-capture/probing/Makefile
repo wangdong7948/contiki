@@ -10,6 +10,9 @@ PROJECT_SOURCEFILES += node-id.c \
   orchestra-rule-unicast-per-time-source.c \
   orchestra-rule-eb-per-time-source-txonly.c
 
+CFLAGS += -DSOFT_TIMER_FREQUENCY=8000000L
+#CFLAGS += -DSOFT_TIMER_FREQUENCY=1000000L
+
 DEPLOYMENT_COOJA=1
 DEPLOYMENT_MOTES=2
 DEPLOYMENT_TWIST=3

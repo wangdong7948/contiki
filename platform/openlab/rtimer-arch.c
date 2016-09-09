@@ -89,14 +89,20 @@ static void
 rtimer_arch_schedule_current(void)
 {
   uint16_t target;
-  rtimer_clock_t now = RTIMER_NOW();
+  rtimer_clock_t now;
+
+  platform_enter_critical();
+
+  now = RTIMER_NOW();
 
   if(currently_scheduled == 0) {
+    platform_exit_critical();
     return;
   }
 
   if(RTIMER_CLOCK_LT(currently_scheduled, now + 1)) {
     rtimer_run_next();
+    platform_exit_critical();
     return;
   }
 
@@ -108,6 +114,8 @@ rtimer_arch_schedule_current(void)
     currently_scheduled = 0;
     timer_set_channel_compare(RTIMER_TIMER, RTIMER_CHANNEL, target, rtimer_cb, NULL);
   }
+
+  platform_exit_critical();
 
 }
 

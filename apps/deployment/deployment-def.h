@@ -79,7 +79,7 @@
 #define ROOT_ID 240
 #define MAX_NODES 360
 #elif IN_IOTLAB_LIL
-#define ROOT_ID 42
+#define ROOT_ID 252
 #define MAX_NODES 238
 #elif IN_IOTLAB_STR
 #define ROOT_ID 46

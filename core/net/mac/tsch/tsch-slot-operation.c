@@ -55,6 +55,15 @@
 #include "net/mac/tsch/tsch-security.h"
 #include "net/mac/tsch/tsch-adaptive-timesync.h"
 
+//#undef RADIO_DELAY_BEFORE_DETECT
+//#define RADIO_DELAY_BEFORE_DETECT (-2) // 1 MHz
+//#undef RADIO_DELAY_BEFORE_DETECT
+//#define RADIO_DELAY_BEFORE_DETECT (-18) // 2 MHz
+//#undef RADIO_DELAY_BEFORE_DETECT
+//#define RADIO_DELAY_BEFORE_DETECT (-23) // 4 MHz
+#undef RADIO_DELAY_BEFORE_DETECT
+#define RADIO_DELAY_BEFORE_DETECT (-8) // 8 MHz
+
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
 #else /* TSCH_LOG_LEVEL */
@@ -997,7 +1006,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     /* Do we need to resynchronize? i.e., wait for EB again */
     if(!tsch_is_coordinator && (ASN_DIFF(current_asn, last_sync_asn) >
-        (100 * TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD / 100, tsch_timing[tsch_ts_timeslot_length])))) {
+        (1000 * TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD / 1000, tsch_timing[tsch_ts_timeslot_length])))) {
       TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
                 "! leaving the network, last sync asn-%x.%lx",
