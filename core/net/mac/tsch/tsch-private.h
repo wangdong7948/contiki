@@ -111,5 +111,10 @@ void tsch_disassociate(void);
 /* Wait for a condition with timeout t0+offset. */
 #define BUSYWAIT_UNTIL_ABS(cond, t0, offset) \
   while(!(cond) && RTIMER_CLOCK_LT(RTIMER_NOW(), (t0) + (offset))) ;
+#define BUSYWAIT_UNTIL_ABS16(cond, t0, offset) \
+  if(((uint16_t)(offset)) & 0x8000) { \
+    while(!(cond) && !RTIMER_CLOCK_LT16(RTIMER_NOW16(), (t0) + (offset))) ; \
+  } \
+  while(!(cond) && RTIMER_CLOCK_LT16(RTIMER_NOW16(), (t0) + (offset))) ;
 
 #endif /* __TSCH_PRIVATE_H__ */

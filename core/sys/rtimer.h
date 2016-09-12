@@ -62,6 +62,9 @@ typedef unsigned short rtimer_clock_t;
 
 #define RTIMER_CLOCK_LT(a, b)      (RTIMER_CLOCK_DIFF((a),(b)) < 0)
 
+#define RTIMER_CLOCK_DIFF16(a,b)     ((int16_t)((a)-(b)))
+#define RTIMER_CLOCK_LT16(a, b)      (RTIMER_CLOCK_DIFF16((a),(b)) < 0)
+
 #include "rtimer-arch.h"
 
 /**
@@ -133,6 +136,7 @@ void rtimer_run_next(void);
  * \hideinitializer
  */
 #define RTIMER_NOW() rtimer_arch_now()
+#define RTIMER_NOW16() rtimer_arch_now16()
 
 /**
  * \brief      Get the time that a task last was executed

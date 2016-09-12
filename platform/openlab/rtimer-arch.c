@@ -68,6 +68,13 @@ rtimer_arch_now(void)
 }
 
 /*-----------------------------------------------------------------------------------*/
+rtimer_clock_t
+rtimer_arch_now16(void)
+{
+  return timer_time(RTIMER_TIMER);
+}
+
+/*-----------------------------------------------------------------------------------*/
 
 static void rtimer_cb(handler_arg_t arg, uint16_t value)
 {

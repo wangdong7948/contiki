@@ -95,6 +95,7 @@ static volatile int cca_pending;
 static uint8_t volatile poll_mode = 0;
 /* SFD timestamp of last incoming packet */
 static rtimer_clock_t sfd_start_time;
+uint16_t sfd_start_time16;
 /* Last packet RSSI */
 static int8_t last_rssi = 0;
 
@@ -946,6 +947,7 @@ static void irq_handler(handler_arg_t arg)
     if (reg & RF2XX_IRQ_STATUS_MASK__RX_START && state == RF_LISTEN)
     {
         rf2xx_state = state = RF_RX;
+        sfd_start_time16 = RTIMER_NOW16();
         sfd_start_time = RTIMER_NOW();
     }
 
