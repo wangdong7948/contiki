@@ -68,7 +68,7 @@ typedef int32_t  s32_t;
  * TODO: the current value is only a guess, needs actual measurement */
 #define RADIO_DELAY_BEFORE_RX ((unsigned)US_TO_RTIMERTICKS(150))
 /* Delay between the SFD finishes arriving and it is detected in software */
-#define RADIO_DELAY_BEFORE_DETECT ((unsigned)US_TO_RTIMERTICKS(0))
+#define RADIO_DELAY_BEFORE_DETECT ((unsigned)US_TO_RTIMERTICKS(32))
 
 /* ---------------------------------------- */
 

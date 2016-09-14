@@ -63,5 +63,6 @@
 #define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
 
 rtimer_clock_t rtimer_arch_now(void);
+#define rtimer_arch_now16 rtimer_arch_now
 
 #endif /* RTIMER_ARCH_H_ */

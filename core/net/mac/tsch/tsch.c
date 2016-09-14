@@ -395,11 +395,12 @@ tsch_rx_process_pending()
     frame802154_t frame;
     uint8_t ret = frame802154_parse(current_input->payload, current_input->len, &frame);
     int is_data = ret && frame.fcf.frame_type == FRAME802154_DATAFRAME;
+    int is_glossy = ret && frame.fcf.frame_type == FRAME802154_CMDFRAME;
     int is_eb = ret
       && frame.fcf.frame_version == FRAME802154_IEEE802154E_2012
       && frame.fcf.frame_type == FRAME802154_BEACONFRAME;
 
-    if(is_data) {
+    if(is_data || is_glossy) {
       /* Skip EBs and other control messages */
       /* Copy to packetbuf for processing */
       packetbuf_copyfrom(current_input->payload, current_input->len);
@@ -413,6 +414,8 @@ tsch_rx_process_pending()
     if(is_data) {
       /* Pass to upper layers */
       packet_input();
+    } else if(is_glossy) {
+      glossy_input();
     } else if(is_eb) {
       eb_input(current_input);
     }
@@ -486,6 +489,11 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   if(input_eb == NULL || tsch_packet_parse_eb(input_eb->payload, input_eb->len,
                                               &frame, &ies, &hdrlen, 0) == 0) {
     PRINTF("TSCH:! failed to parse EB (len %u)\n", input_eb->len);
+    return 0;
+  }
+
+  if(TSCH_LOG_ID_FROM_LINKADDR((const uip_lladdr_t *)&frame.src_addr) != ROOT_ID) {
+    PRINTF("TSCH:! parse_eb: EB is not from coordinator\n");
     return 0;
   }
 
@@ -673,7 +681,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
     if(current_channel == 0 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {
       /* Pick a channel at random in TSCH_JOIN_HOPPING_SEQUENCE */
       uint8_t scan_channel = TSCH_JOIN_HOPPING_SEQUENCE[
-          random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
+          (random_rand()>>6) % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
       if(current_channel != scan_channel) {
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
         current_channel = scan_channel;
@@ -769,6 +777,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
 
   /* Set an initial delay except for coordinator, which should send an EB asap */
   if(!tsch_is_coordinator) {
+    //PROCESS_EXIT();
     etimer_set(&eb_timer, random_rand() % TSCH_EB_PERIOD);
     PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
   }
@@ -948,8 +957,10 @@ send_packet(mac_callback_t sent, void *ptr)
     addr = &tsch_broadcast_address;
   }
 
-  packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_CMDFRAME) {
+    packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
+  }
 
 #if LLSEC802154_ENABLED
   if(tsch_is_pan_secured) {

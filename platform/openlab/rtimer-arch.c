@@ -56,7 +56,7 @@ void rtimer_arch_init(void)
   /* timer is already started in agilefox_drivers.c */
   log_debug("rtimer_arch_init() called");
   // ensure lowest priority so that rtimer tasks can be interrupted
-  nvic_set_priority(RTIMER_IRQ_LINE, 0xff);
+  nvic_set_priority(RTIMER_IRQ_LINE, 0x1);
 }
 
 /*-----------------------------------------------------------------------------------*/

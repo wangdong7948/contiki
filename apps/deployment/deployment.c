@@ -1160,7 +1160,13 @@ deployment_init(int root_id)
   node_id_restore();
   node_index = get_node_index_from_id(node_id);
 
-  if(node_id == 0) {
+  if(0
+      || node_id == 243
+      || node_id == 244
+      || node_id == 246
+      || node_id == 248
+      ) {
+  /*if(node_id == 0) {*/
     NETSTACK_RADIO.off();
     NETSTACK_RDC.off(0);
     NETSTACK_MAC.off(0);

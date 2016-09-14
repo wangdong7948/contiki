@@ -10,6 +10,8 @@ PROJECT_SOURCEFILES += node-id.c \
   orchestra-rule-unicast-per-time-source.c \
   orchestra-rule-eb-per-time-source-txonly.c
 
+CFLAGS += -DSOFT_TIMER_FREQUENCY=8000000L
+
 DEPLOYMENT_COOJA=1
 DEPLOYMENT_MOTES=2
 DEPLOYMENT_TWIST=3
@@ -23,7 +25,7 @@ ifdef DEP
 CFLAGS+= -DDEPLOYMENT=$(DEP)
 endif
 
-APPS = deployment
+APPS = deployment orchestra
 CONTIKI_WITH_RIME = 1
 MODULES += core/net/mac/tsch
 

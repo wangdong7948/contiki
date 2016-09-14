@@ -131,7 +131,8 @@ create_frame(int type, int do_create)
     if(mac_dsn == 0) {
       mac_dsn++;
     }
-    params.seq = mac_dsn++;
+    //params.seq = mac_dsn++;
+    params.seq = 0;
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, params.seq);
   }
 
@@ -172,6 +173,10 @@ create_frame(int type, int do_create)
    * phase 1.
    */
   linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_CMDFRAME) {
+    linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_null);
+    params.fcf.sequence_number_suppression = 1;
+  }
 
   params.payload = packetbuf_dataptr();
   params.payload_len = packetbuf_datalen();

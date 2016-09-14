@@ -45,20 +45,14 @@
 #include "net/rime/rime.h"
 #include "net/mac/tsch/tsch.h"
 #include "deployment.h"
+#include "orchestra.h"
 
 const linkaddr_t coordinator_addr =    { { 1, 0 } };
-static void recv_bc(struct broadcast_conn *c, const linkaddr_t *from);
-static void sent_bc(struct broadcast_conn *ptr, int status, int num_tx);
-static const struct broadcast_callbacks broadcast_callback = { recv_bc, sent_bc };
-static struct broadcast_conn bc;
 
-static int gloss_tx_count;
-static struct ctimer glossy_timer;
+static int glossy_tx_count;
 
 #define TX_COUNT 3
-static unsigned char payload[128];
-static unsigned payload_len;
-static unsigned glossy_round = 0;
+static uint16_t glossy_round = 0;
 
 #define START_DELAY (30 * CLOCK_SECOND)
 
@@ -70,36 +64,26 @@ AUTOSTART_PROCESSES(&unicast_test_process);
 static void
 glossy_send()
 {
-  packetbuf_copyfrom(payload, payload_len);
-  broadcast_send(&bc);
-  if(--gloss_tx_count) {
-    ctimer_set(&glossy_timer, 0, glossy_send, NULL);
+  if(glossy_tx_count--) {
+    packetbuf_copyfrom(&glossy_round, sizeof(glossy_round));
+    packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_CMDFRAME); /* We use CMD frame as a hack */
+    NETSTACK_MAC.send(NULL, NULL);
+    printf("App: glossy sending %u\n", glossy_round);
   }
 }
 /*---------------------------------------------------------------------------*/
 void
-glossy_start()
+glossy_input()
 {
-  *((unsigned*)payload) = glossy_round;
-  payload_len = 32;
-  gloss_tx_count = TX_COUNT;
-  glossy_send();
-}
-/*---------------------------------------------------------------------------*/
-static void
-recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
-{
-  packetbuf_copyto(payload);
-  if(*((unsigned*)payload) > glossy_round) {
-    glossy_round = *((unsigned*)payload);
-    glossy_start();
-    printf("App: bc message received from %u, round %u\n", LOG_ID_FROM_LINKADDR(from), glossy_round);
+  uint16_t recv_glossy_round;
+  NETSTACK_FRAMER.parse();
+  recv_glossy_round = *((uint16_t*)packetbuf_dataptr());
+  if(recv_glossy_round > glossy_round) {
+    glossy_round = recv_glossy_round;
+    glossy_tx_count = TX_COUNT;
   }
-}
-/*---------------------------------------------------------------------------*/
-static void
-sent_bc(struct broadcast_conn *ptr, int status, int num_tx)
-{
+  printf("App: glossy received %x\n", glossy_round);
+  glossy_send();
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(unicast_test_process, ev, data)
@@ -121,17 +105,25 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 
   printf("App: my node id %u %u\n", node_id, LOG_ID_FROM_LINKADDR(&linkaddr_node_addr));
 
-  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
+  tsch_set_coordinator(node_id == ROOT_ID);
   NETSTACK_MAC.on();
 
-  broadcast_open(&bc, 146, &broadcast_callback);
+  orchestra_init();
 
   etimer_set(&et, START_DELAY);
   PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-  if(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr)) {
-    glossy_round++;
-    glossy_start();
+  if(node_id == ROOT_ID) {
+
+    etimer_set(&et, 15 * CLOCK_SECOND);
+    while(1) {
+      glossy_round++;
+      glossy_tx_count = TX_COUNT;
+      glossy_send();
+
+      etimer_set(&et, 10 * CLOCK_SECOND + ((random_rand()>>6) % (5 * CLOCK_SECOND)));
+      PROCESS_WAIT_UNTIL(etimer_expired(&et));
+    }
   }
 
   PROCESS_END();

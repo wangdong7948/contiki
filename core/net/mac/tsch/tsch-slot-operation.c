@@ -715,7 +715,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     log->tx.datalen = queuebuf_datalen(current_packet->qb);
     log->tx.drift = drift_correction;
     log->tx.drift_used = is_drift_correction_used;
-    log->tx.is_data = ((((uint8_t *)(queuebuf_dataptr(current_packet->qb)))[0]) & 7) == FRAME802154_DATAFRAME;
+    log->tx.is_data = ((((uint8_t *)(queuebuf_dataptr(current_packet->qb)))[0]) & 7) != FRAME802154_BEACONFRAME;
 #if LLSEC802154_ENABLED
     log->tx.sec_level = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_SECURITY_LEVEL);
 #else /* LLSEC802154_ENABLED */
@@ -786,21 +786,26 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       offset = tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT;
       /* Check if receiving within guard time */
       TSCH_SCHEDULE_AND_YIELD16(pt, t, current_slot_start, offset, "RxGuardTime");
+      //BUSYWAIT_UNTIL_ABS16((packet_seen = NETSTACK_RADIO.receiving_packet()),
+         //      current_slot_start, offset);
       packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
     }
     if(!packet_seen) {
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
     } else {
+      //static uint16_t offset;
       TSCH_DEBUG_RX_EVENT();
 
       /* Save packet timestamp */
       //rx_start_time = RTIMER_NOW16() - RADIO_DELAY_BEFORE_DETECT;
-      //printf("exp %u\n", expected_rx_time);
+      rx_start_time = sfd_start_time16 - RADIO_DELAY_BEFORE_DETECT;
 
       /* Wait until packet is received, turn radio off */
       BUSYWAIT_UNTIL_ABS16(!NETSTACK_RADIO.receiving_packet(),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
+      //offset = tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx];
+      //TSCH_SCHEDULE_AND_YIELD16(pt, t, current_slot_start, offset, "RxReceiving");
       TSCH_DEBUG_RX_EVENT();
       tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
@@ -821,11 +826,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           frame802154_check_dest_panid(&frame) &&
           frame802154_extract_linkaddr(&frame, &source_address, &destination_address);
 
-#if TSCH_RESYNC_WITH_SFD_TIMESTAMPS
+//#if TSCH_RESYNC_WITH_SFD_TIMESTAMPS
         /* At the end of the reception, get an more accurate estimate of SFD arrival time */
         //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
-        rx_start_time = sfd_start_time16 - RADIO_DELAY_BEFORE_DETECT;
-#endif
+        //        rx_start_time = sfd_start_time16 - RADIO_DELAY_BEFORE_DETECT;
+        //#endif
 
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
 
@@ -902,8 +907,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
             /* If the sender is a time source, proceed to clock drift compensation */
             n = tsch_queue_get_nbr(&source_address);
-            if(n != NULL && n->is_time_source &&
-                (TSCH_SYNC_ON_EB || frame.fcf.frame_type != FRAME802154_BEACONFRAME)) {
+            if(frame.fcf.frame_type == FRAME802154_CMDFRAME ||
+                (n != NULL && n->is_time_source &&
+                (TSCH_SYNC_ON_EB || frame.fcf.frame_type != FRAME802154_BEACONFRAME))) {
               int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
               /* Keep track of last sync time */
               last_sync_asn = current_asn;
@@ -924,7 +930,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.datalen = current_input->len;
               log->rx.drift = drift_correction;
               log->rx.drift_used = is_drift_correction_used;
-              log->rx.is_data = frame.fcf.frame_type == FRAME802154_DATAFRAME;
+              log->rx.is_data = frame.fcf.frame_type != FRAME802154_BEACONFRAME;
               log->rx.sec_level = frame.aux_hdr.security_control.security_level;
               log->rx.estimated_drift = estimated_drift;
 #if WITH_RSSI_LOG
