@@ -70,6 +70,9 @@ typedef int32_t  s32_t;
 #define RADIO_DELAY_BEFORE_DETECT ((unsigned)US_TO_RTIMERTICKS(0))
 
 /* ---------------------------------------- */
+#ifndef ENERGEST_CONF_ON
+#define ENERGEST_CONF_ON 1
+#endif /* ENERGEST_CONF_ON */
 
 /*
  * Networking configuration inpired by cooja/contiki-conf.h

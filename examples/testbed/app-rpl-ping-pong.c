@@ -46,7 +46,9 @@
 #include "deployment.h"
 #include "simple-udp.h"
 #include <stdio.h>
-//#include "orchestra.h"
+#if WITH_ORCHESTRA
+#include "orchestra.h"
+#endif
 
 #define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"

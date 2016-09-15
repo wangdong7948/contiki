@@ -321,6 +321,34 @@
 
 #endif
 
+#if WITH_ORCHESTRA
+
+/* See apps/orchestra/README.md for more Orchestra configuration options */
+#define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL 0 /* No 6TiSCH minimal schedule */
+#define TSCH_CONF_WITH_LINK_SELECTOR 1 /* Orchestra requires per-packet link selection */
+/* Orchestra callbacks */
+#define TSCH_CALLBACK_NEW_TIME_SOURCE orchestra_callback_new_time_source
+#define TSCH_CALLBACK_PACKET_READY orchestra_callback_packet_ready
+#define NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK orchestra_callback_child_added
+#define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed
+
+#undef ORCHESTRA_CONF_RULES
+#define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
+
+#undef ORCHESTRA_CONF_EBSF_PERIOD
+#define ORCHESTRA_CONF_EBSF_PERIOD 383
+
+#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31
+
+#undef ORCHESTRA_CONF_UNICAST_PERIOD
+#define ORCHESTRA_CONF_UNICAST_PERIOD 17
+
+#undef ORCHESTRA_CONF_LINKADDR_HASH
+#define ORCHESTRA_CONF_LINKADDR_HASH(addr)             (node_id_from_linkaddr(addr) * 61)
+
+#endif
+
 #define WITH_RPL 1
 #define WITH_DEPLOYMENT 1
 #define WITH_LOG 1
