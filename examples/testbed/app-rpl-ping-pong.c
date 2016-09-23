@@ -67,6 +67,11 @@
 #define SEND_INTERVAL   (CLOCK_SECOND/4)
 #endif
 
+#if WITH_ORCHESTRA
+#undef SEND_INTERVAL
+#define SEND_INTERVAL   (CLOCK_SECOND)
+#endif
+
 #define WITH_PONG 0
 #define UDP_PORT 1234
 
