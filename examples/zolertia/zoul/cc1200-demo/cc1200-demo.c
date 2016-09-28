@@ -85,15 +85,17 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
 
   etimer_set(&et, LOOP_INTERVAL);
 
-  while(1) {
-    PROCESS_YIELD();
-    if(ev == PROCESS_EVENT_TIMER) {
-      printf("Broadcast --> %u\n", counter);
-      leds_toggle(LEDS_RED);
-      packetbuf_copyfrom(&counter, sizeof(counter));
-      broadcast_send(&bc);
-      counter++;
-      etimer_set(&et, LOOP_INTERVAL);
+  if(linkaddr_node_addr.u8[1] == 196) {
+    while(1) {
+      PROCESS_YIELD();
+      if(ev == PROCESS_EVENT_TIMER) {
+        printf("Broadcast --> %u\n", counter);
+        leds_toggle(LEDS_RED);
+        packetbuf_copyfrom(&counter, sizeof(counter));
+        broadcast_send(&bc);
+        counter++;
+        etimer_set(&et, LOOP_INTERVAL);
+      }
     }
   }
 
