@@ -27,7 +27,7 @@ init(void)
     current_radio = radios[0];
     for(i=0; i<num_radios; i++) {
       if(radios[i]->init() == 0) {
-        return 0;
+      return 0;
       }
     }
     return 1;
@@ -60,8 +60,7 @@ static int
 send(const void *payload, unsigned short payload_len)
 {
   if(current_radio != NULL) {
-    current_radio->prepare(payload, payload_len);
-    return current_radio->transmit(payload_len);
+    return current_radio->send(payload, payload_len);
   } else {
     return 0;
   }
