@@ -49,22 +49,23 @@
 #include "dev/serial-line.h"
 #include "dev/sys-ctrl.h"
 #include "net/rime/broadcast.h"
+#include "net/netstack.h"
 
 #include <stdio.h>
 #include <stdint.h>
 /*---------------------------------------------------------------------------*/
-#define LOOP_PERIOD         2
+#define LOOP_PERIOD         1
 #define LOOP_INTERVAL       (CLOCK_SECOND * LOOP_PERIOD)
 #define BROADCAST_CHANNEL   129
 /*---------------------------------------------------------------------------*/
 static struct etimer et;
-static uint16_t counter;
+static uint32_t counter;
 /*---------------------------------------------------------------------------*/
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   printf("*** Received %u bytes from %u:%u: '0x%04u' ", packetbuf_datalen(),
-         from->u8[0], from->u8[1], *(uint16_t *)packetbuf_dataptr());
+         from->u8[0], from->u8[1], (unsigned)*(uint32_t *)packetbuf_dataptr());
   printf("%d - %u\n", (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI),
          packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY));
   leds_toggle(LEDS_GREEN);
@@ -85,14 +86,15 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
 
   etimer_set(&et, LOOP_INTERVAL);
 
-  if(linkaddr_node_addr.u8[1] == 196) {
+  if(linkaddr_node_addr.u8[0] == 180 && linkaddr_node_addr.u8[1] == 73) {
     while(1) {
       PROCESS_YIELD();
       if(ev == PROCESS_EVENT_TIMER) {
-        printf("Broadcast --> %u\n", counter);
+        printf("Broadcast --> %u\n", (unsigned)counter);
         leds_toggle(LEDS_RED);
-        packetbuf_copyfrom(&counter, sizeof(counter));
-        broadcast_send(&bc);
+        //packetbuf_copyfrom(&counter, sizeof(counter));
+        //broadcast_send(&bc);
+        NETSTACK_RADIO.send(&counter, 4);
         counter++;
         etimer_set(&et, LOOP_INTERVAL);
       }
