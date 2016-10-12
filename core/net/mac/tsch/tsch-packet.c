@@ -302,7 +302,7 @@ tsch_packet_create_eb(uint8_t *buf, int buf_size,
   }
   curr_len += ret;
 
-  if((ret = frame80215e_create_ie_tsch_timeslot(buf + curr_len, buf_size - curr_len, &ies)) == -1) {
+  /*if((ret = frame80215e_create_ie_tsch_timeslot(buf + curr_len, buf_size - curr_len, &ies)) == -1) {
     return -1;
   }
   curr_len += ret;
@@ -315,7 +315,7 @@ tsch_packet_create_eb(uint8_t *buf, int buf_size,
   if((ret = frame80215e_create_ie_tsch_slotframe_and_link(buf + curr_len, buf_size - curr_len, &ies)) == -1) {
     return -1;
   }
-  curr_len += ret;
+  curr_len += ret;*/
 
   ies.ie_mlme_len = curr_len - mlme_ie_offset - 2;
   if((ret = frame80215e_create_ie_mlme(buf + mlme_ie_offset, buf_size - mlme_ie_offset, &ies)) == -1) {
