@@ -47,6 +47,10 @@
 #include <string.h>
 #include <stdio.h>
 
+static rtimer_clock_t sfd_timestamp = 0;
+/* Are we currently in poll mode? Disabled by default */
+static uint8_t volatile poll_mode = 0;
+
 /*---------------------------------------------------------------------------*/
 /* Various implementation specific defines */
 /*---------------------------------------------------------------------------*/
@@ -133,7 +137,7 @@
 /* Use GPIO2 as RX / TX FIFO threshold indicator pin */
 #define GPIO2_IOCFG                     CC1200_IOCFG_RXFIFO_THR
 /* This is the FIFO threshold we use */
-#define FIFO_THRESHOLD                  32
+#define FIFO_THRESHOLD                  0
 /* Turn on RX after packet reception */
 #define RXOFF_MODE_RX                   1
 /* Let the CC1200 append RSSI + LQI */
@@ -624,7 +628,7 @@ pollhandler(void)
     set_channel(new_rf_channel);
   }
 
-  if(rx_pkt_len > 0) {
+  if(poll_mode == 0 && rx_pkt_len > 0) {
 
     int len;
 
@@ -985,8 +989,7 @@ receiving_packet(void)
 
   if((rf_flags & (RF_ON | RF_TX_ACTIVE)) == RF_ON) {
     /* We are on and not in TX */
-    if((cc1200_arch_gpio0_read_pin() == 1) || (rx_pkt_len != 0)) {
-
+    if((cc1200_arch_gpio0_read_pin() > 0) || (rx_pkt_len != 0)) {
       /*
        * SYNC word found or packet just received. Changing the criteria
        * for this event might make it necessary to review the MAC timing
@@ -1014,9 +1017,16 @@ receiving_packet(void)
 static int
 pending_packet(void)
 {
+  int ret;
+  ret = ((rx_pkt_len != 0) ? 1 : 0);
+  if(ret == 0 && !SPI_IS_LOCKED()) {
+    LOCK_SPI();
+    ret = (single_read(CC1200_NUM_RXBYTES) > 0);
+    RELEASE_SPI();
+  }
 
-  INFO("RF: Pending (%d)\n", ((rx_pkt_len != 0) ? 1 : 0));
-  return (rx_pkt_len != 0) ? 1 : 0;
+  INFO("RF: Pending (%d)\n", ret);
+  return ret;
 
 }
 /*---------------------------------------------------------------------------*/
@@ -1085,6 +1095,16 @@ off(void)
 
     idle();
 
+    if(single_read(CC1200_NUM_RXBYTES) > 0) {
+      RELEASE_SPI();
+      /* In case there is something in the Rx FIFO, read it */
+      cc1200_rx_interrupt();
+      if(SPI_IS_LOCKED()) {
+        return 0;
+      }
+      LOCK_SPI();
+    }
+
     /*
      * As we use GPIO as CHIP_RDYn signal on wake-up / on(),
      * we re-configure it for CHIP_RDYn.
@@ -1109,6 +1129,12 @@ off(void)
 
   return 1;
 
+}
+/*---------------------------------------------------------------------------*/
+static void
+set_poll_mode(uint8_t enable)
+{
+  poll_mode = enable;
 }
 /*---------------------------------------------------------------------------*/
 /* Get a radio parameter value. */
@@ -1237,6 +1263,8 @@ set_value(radio_param_t param, radio_value_t value)
   case RADIO_PARAM_RX_MODE:
 
     rx_mode_value = value;
+    set_poll_mode((value & RADIO_RX_MODE_POLL_MODE) != 0);
+
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_TX_MODE:
@@ -1287,6 +1315,14 @@ set_value(radio_param_t param, radio_value_t value)
 static radio_result_t
 get_object(radio_param_t param, void *dest, size_t size)
 {
+
+  if(param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
+    if(size != sizeof(rtimer_clock_t) || !dest) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    *(rtimer_clock_t *)dest = sfd_timestamp;
+    return RADIO_RESULT_OK;
+  }
 
   return RADIO_RESULT_NOT_SUPPORTED;
 
@@ -2209,6 +2245,21 @@ cc1200_rx_interrupt(void)
    * LQI in this buffer
    */
   static uint8_t buf[CC1200_MAX_PAYLOAD_LEN + APPENDIX_LEN];
+
+  /*
+   * If CC1200_USE_GPIO2 is enabled, we come here either once RX FIFO
+   * threshold is reached (GPIO2 rising edge)
+   * or at the end of the packet (GPIO0 falling edge).
+   */
+  static int is_receiving = 0;
+  int gpio2 = cc1200_arch_gpio2_read_pin();
+  if(is_receiving == 0 && gpio2 > 0) {
+    is_receiving = 1;
+    sfd_timestamp = RTIMER_NOW();
+  }
+  if(gpio2 == 0) {
+    is_receiving = 0;
+  }
 
   if(SPI_IS_LOCKED()) {
 
