@@ -641,6 +641,8 @@ pollhandler(void)
 
     if(len > 0) {
       packetbuf_set_datalen(len);
+      printf("cc1200: Received %u, %d dBm\n",
+            packetbuf_datalen(), (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
       NETSTACK_RDC.input();
     }
 
@@ -1265,6 +1267,18 @@ get_value(radio_param_t param, radio_value_t *value)
 
     *value = (radio_value_t)CC1200_RF_CFG.max_txpower;
     return RADIO_RESULT_OK;
+
+  case RADIO_CONST_DELAY_BEFORE_TX:
+    *value = (radio_value_t)CC1200_DELAY_BEFORE_TX;
+    return RADIO_RESULT_OK;
+
+  case RADIO_CONST_DELAY_BEFORE_RX:
+      *value = (radio_value_t)CC1200_DELAY_BEFORE_RX;
+      return RADIO_RESULT_OK;
+
+  case RADIO_CONST_DELAY_BEFORE_DETECT:
+      *value = (radio_value_t)CC1200_DELAY_BEFORE_DETECT;
+      return RADIO_RESULT_OK;
 
   default:
 
@@ -2416,6 +2430,7 @@ cc1200_rx_interrupt(void)
       } else {
 
         int ret = addr_check_auto_ack(buf, bytes_read);
+        //ret = ADDR_CHECK_OK;
 
         if((ret == ADDR_CHECK_OK) ||
            (ret == ADDR_CHECK_OK_ACK_SEND)) {

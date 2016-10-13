@@ -874,6 +874,15 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_CONST_TXPOWER_MAX:
     *value = OUTPUT_POWER_MAX;
     return RADIO_RESULT_OK;
+  case RADIO_CONST_DELAY_BEFORE_TX:
+    *value = (radio_value_t)CC2538_DELAY_BEFORE_TX;
+    return RADIO_RESULT_OK;
+  case RADIO_CONST_DELAY_BEFORE_RX:
+    *value = (radio_value_t)CC2538_DELAY_BEFORE_RX;
+    return RADIO_RESULT_OK;
+  case RADIO_CONST_DELAY_BEFORE_DETECT:
+    *value = (radio_value_t)CC2538_DELAY_BEFORE_DETECT;
+    return RADIO_RESULT_OK;
   default:
     return RADIO_RESULT_NOT_SUPPORTED;
   }

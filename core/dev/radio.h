@@ -180,7 +180,11 @@ enum {
   /* The minimum transmission power in dBm. */
   RADIO_CONST_TXPOWER_MIN,
   /* The maximum transmission power in dBm. */
-  RADIO_CONST_TXPOWER_MAX
+  RADIO_CONST_TXPOWER_MAX,
+
+  RADIO_CONST_DELAY_BEFORE_TX,
+  RADIO_CONST_DELAY_BEFORE_RX,
+  RADIO_CONST_DELAY_BEFORE_DETECT,
 };
 
 /* Radio power modes */
