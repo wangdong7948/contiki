@@ -92,6 +92,24 @@ NBR_TABLE(struct eb_stat, eb_stats);
 uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 struct asn_divisor_t tsch_hopping_sequence_length;
 
+#define TSCH_PREAMBLE_LENGTH               960
+#define TSCH_CONF_RX_WAIT                 1000
+#define TSCH_CONF_RX_ACK_WAIT              120
+
+#define TSCH_DEFAULT_TS_CCA_OFFSET         1800
+#define TSCH_DEFAULT_TS_CCA                128
+#define TSCH_DEFAULT_TS_TX_OFFSET          7000
+#define TSCH_DEFAULT_TS_RX_OFFSET          (TSCH_DEFAULT_TS_TX_OFFSET - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_WAIT / 2))
+#define TSCH_DEFAULT_TS_ACK_WAIT           (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_ACK_WAIT)
+#define TSCH_DEFAULT_TS_TX_ACK_DELAY       20000
+#define TSCH_DEFAULT_TS_RX_ACK_DELAY       (TSCH_DEFAULT_TS_TX_ACK_DELAY - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_ACK_WAIT / 2))
+#define TSCH_DEFAULT_TS_RX_WAIT            (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_WAIT)
+#define TSCH_DEFAULT_TS_RX_TX              2072
+#define TSCH_DEFAULT_TS_MAX_ACK            4000
+#define TSCH_DEFAULT_TS_MAX_TX             20320
+/* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK */
+#define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    52000
+
 /* Default TSCH timeslot timing (in micro-second) */
 static const uint16_t tsch_default_timing_us[tsch_ts_elements_count] = {
   TSCH_DEFAULT_TS_CCA_OFFSET,
