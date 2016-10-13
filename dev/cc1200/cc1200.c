@@ -97,7 +97,7 @@ static uint8_t volatile poll_mode = 0;
  *
  * TODO: Option to be removed upon approval of the driver
  */
-#define USE_SFSTXON                     1
+#define USE_SFSTXON                     0
 /*---------------------------------------------------------------------------*/
 /* Phy header length */
 #if CC1200_802154G
@@ -385,8 +385,6 @@ extern const cc1200_rf_cfg_t CC1200_RF_CFG;
 /*---------------------------------------------------------------------------*/
 /* Flag indicating whether non-interrupt routines are using SPI */
 static volatile uint8_t spi_locked = 0;
-/* Packet buffer for transmission, filled within prepare() */
-static uint8_t tx_pkt[CC1200_MAX_PAYLOAD_LEN];
 /* The number of bytes waiting in tx_pkt */
 static uint16_t tx_pkt_len;
 /* Packet buffer for reception */
@@ -534,9 +532,9 @@ idle_calibrate_rx(void);
 /* Restart RX from within RX interrupt. */
 static void
 rx_rx(void);
-/* Fill TX FIFO, start TX and wait for TX to complete (blocking!). */
+/* Start TX and wait for TX to complete (blocking!). */
 static int
-idle_tx_rx(const uint8_t *payload, uint16_t payload_len);
+idle_tx_rx(uint16_t payload_len);
 /* Update TX power */
 static void
 update_txpower(int8_t txpower_dbm);
@@ -716,8 +714,14 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
+#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
+  uint16_t bytes_left_to_write;
+  uint8_t to_write;
+  const uint8_t *p;
+#endif
 
   INFO("RF: Prepare (%d)\n", payload_len);
+  idle();
 
   if((payload_len < ACK_LEN) ||
      (payload_len > CC1200_MAX_PAYLOAD_LEN)) {
@@ -726,10 +730,61 @@ prepare(const void *payload, unsigned short payload_len)
   }
 
   tx_pkt_len = payload_len;
-  memcpy(tx_pkt, payload, tx_pkt_len);
 
-  return RADIO_TX_OK;
+#if CC1200_802154G
+  /* Prepare PHR for 802.15.4g frames */
+  struct {
+    uint8_t phra;
+    uint8_t phrb;
+  } phr;
+#if CC1200_802154G_CRC16
+  payload_len += 2;
+#else
+  payload_len += 4;
+#endif
+  /* Frame length */
+  phr.phrb = (uint8_t)(payload_len & 0x00FF);
+  phr.phra = (uint8_t)((payload_len >> 8) & 0x0007);
+#if CC1200_802154G_WHITENING
+  /* Enable Whitening */
+  phr.phra |= (1 << 3);
+#endif /* #if CC1200_802154G_WHITENING */
+#if CC1200_802154G_CRC16
+  /* FCS type 1, 2 Byte CRC */
+  phr.phra |= (1 << 4);
+#endif /* #if CC1200_802154G_CRC16 */
+#endif /* #if CC1200_802154G */
 
+  rf_flags &= ~RF_RX_PROCESSING_PKT;
+  strobe(CC1200_SFRX);
+  /* Flush TX FIFO */
+  strobe(CC1200_SFTX);
+
+#if CC1200_802154G
+  /* Write PHR */
+  burst_write(CC1200_TXFIFO, (uint8_t *)&phr, PHR_LEN);
+#else
+  /* Write length byte */
+  burst_write(CC1200_TXFIFO, (uint8_t *)&payload_len, PHR_LEN);
+#endif /* #if CC1200_802154G */
+
+  /*
+   * Fill FIFO with data. If SPI is slow it might make sense
+   * to divide this process into several chunks.
+   * The best solution would be to perform TX FIFO refill
+   * using an interrupt, but we are blocking here (= in TX) anyway...
+   */
+
+#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
+  to_write = MIN(payload_len, (CC1200_FIFO_SIZE - PHR_LEN));
+  burst_write(CC1200_TXFIFO, payload, to_write);
+  bytes_left_to_write = payload_len - to_write;
+  p = payload + to_write;
+#else
+  burst_write(CC1200_TXFIFO, payload, payload_len);
+#endif
+
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
 /* Send the packet that has previously been prepared. */
@@ -797,7 +852,7 @@ transmit(unsigned short transmit_len)
   RIMESTATS_ADD(lltx);
 
   /* Send data using TX FIFO */
-  if(idle_tx_rx((const uint8_t *)tx_pkt, tx_pkt_len) == RADIO_TX_OK) {
+  if(idle_tx_rx(tx_pkt_len) == RADIO_TX_OK) {
 
     /*
      * TXOFF_MODE is set to RX,
@@ -933,7 +988,7 @@ channel_clear(void)
    * packet???
    */
 
-  if(cc1200_arch_gpio0_read_pin() == 1) {
+  if(cc1200_arch_gpio0_read_pin() > 0) {
     /* Channel occupied */
     INFO("RF: CCA (0)\n");
     cca = 0;
@@ -1593,7 +1648,7 @@ configure(void)
     clock_delay_usec(1000);
 
     /* CS on GPIO3 */
-    if(cc1200_arch_gpio3_read_pin() == 1) {
+    if(cc1200_arch_gpio3_read_pin() > 0) {
       leds_on(LEDS_RED);
     } else {
       leds_off(LEDS_RED);
@@ -1755,7 +1810,7 @@ static void
 idle_calibrate_rx(void)
 {
 
-  RF_ASSERT(state() == STATE_IDLE);
+  //RF_ASSERT(state() == STATE_IDLE);
 
 #if !CC1200_AUTOCAL
   calibrate();
@@ -1805,91 +1860,17 @@ rx_rx(void)
 
 }
 /*---------------------------------------------------------------------------*/
-/* Fill TX FIFO, start TX and wait for TX to complete (blocking!). */
+/* Start TX and wait for TX to complete (blocking!). */
 static int
-idle_tx_rx(const uint8_t *payload, uint16_t payload_len)
+idle_tx_rx(uint16_t payload_len)
 {
-
-#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
-  uint16_t bytes_left_to_write;
-  uint8_t to_write;
-  const uint8_t *p;
-#endif
-
-#if CC1200_802154G
-  /* Prepare PHR for 802.15.4g frames */
-  struct {
-    uint8_t phra;
-    uint8_t phrb;
-  } phr;
-#if CC1200_802154G_CRC16
-  payload_len += 2;
-#else
-  payload_len += 4;
-#endif
-  /* Frame length */
-  phr.phrb = (uint8_t)(payload_len & 0x00FF);
-  phr.phra = (uint8_t)((payload_len >> 8) & 0x0007);
-#if CC1200_802154G_WHITENING
-  /* Enable Whitening */
-  phr.phra |= (1 << 3);
-#endif /* #if CC1200_802154G_WHITENING */
-#if CC1200_802154G_CRC16
-  /* FCS type 1, 2 Byte CRC */
-  phr.phra |= (1 << 4);
-#endif /* #if CC1200_802154G_CRC16 */
-#endif /* #if CC1200_802154G */
 
   /* Prepare for RX */
   rf_flags &= ~RF_RX_PROCESSING_PKT;
   strobe(CC1200_SFRX);
 
-  /* Flush TX FIFO */
-  strobe(CC1200_SFTX);
-
-#if USE_SFSTXON
-  /*
-   * Enable synthesizer. Saves us a few µs especially if it takes
-   * long enough to fill the FIFO. This strobe must not be
-   * send before SFTX!
-   */
-  strobe(CC1200_SFSTXON);
-#endif
-
   /* Configure GPIO0 to detect TX state */
   single_write(CC1200_IOCFG0, CC1200_IOCFG_MARC_2PIN_STATUS_0);
-
-#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
-  /*
-   * We already checked that GPIO2 is used if
-   * CC1200_MAX_PAYLOAD_LEN > 127 / 126 in the header of this file
-   */
-  single_write(CC1200_IOCFG2, CC1200_IOCFG_TXFIFO_THR);
-#endif
-
-#if CC1200_802154G
-  /* Write PHR */
-  burst_write(CC1200_TXFIFO, (uint8_t *)&phr, PHR_LEN);
-#else
-  /* Write length byte */
-  burst_write(CC1200_TXFIFO, (uint8_t *)&payload_len, PHR_LEN);
-#endif /* #if CC1200_802154G */
-
-  /*
-   * Fill FIFO with data. If SPI is slow it might make sense
-   * to divide this process into several chunks.
-   * The best solution would be to perform TX FIFO refill
-   * using an interrupt, but we are blocking here (= in TX) anyway...
-   */
-
-#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
-  to_write = MIN(payload_len, (CC1200_FIFO_SIZE - PHR_LEN));
-  burst_write(CC1200_TXFIFO, payload, to_write);
-  bytes_left_to_write = payload_len - to_write;
-  p = payload + to_write;
-#else
-  burst_write(CC1200_TXFIFO, payload, payload_len);
-#endif
 
 #if USE_SFSTXON
   /* Wait for synthesizer to be ready */
@@ -1900,7 +1881,8 @@ idle_tx_rx(const uint8_t *payload, uint16_t payload_len)
   strobe(CC1200_STX);
 
   /* Wait for TX to start. */
-  BUSYWAIT_UNTIL((cc1200_arch_gpio0_read_pin() == 1), RTIMER_SECOND / 100);
+
+  BUSYWAIT_UNTIL((cc1200_arch_gpio0_read_pin() > 0), RTIMER_SECOND / 100);
 
   /* Turned off at the latest in idle() */
   TX_LEDS_ON();
@@ -1944,7 +1926,7 @@ idle_tx_rx(const uint8_t *payload, uint16_t payload_len)
         p += to_write;
         t0 += CC1200_RF_CFG.tx_pkt_lifetime;
       }
-    } while((cc1200_arch_gpio0_read_pin() == 1) &&
+    } while((cc1200_arch_gpio0_read_pin() > 0) &&
             RTIMER_CLOCK_LT(RTIMER_NOW(), t0 + CC1200_RF_CFG.tx_pkt_lifetime));
 
     /*
@@ -1986,7 +1968,7 @@ idle_tx_rx(const uint8_t *payload, uint16_t payload_len)
                  CC1200_RF_CFG.tx_pkt_lifetime);
 #endif
 
-  if(cc1200_arch_gpio0_read_pin() == 1) {
+  if(cc1200_arch_gpio0_read_pin() > 0) {
     /* TX takes to long - abort */
     ERROR("RF: TX takes to long!\n");
 #if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
@@ -2198,7 +2180,8 @@ addr_check_auto_ack(uint8_t *frame, uint16_t frame_len)
         idle();
 #endif
         
-        idle_tx_rx((const uint8_t *)ack, ACK_LEN);
+        prepare((const uint8_t *)ack, ACK_LEN);
+        idle_tx_rx(ACK_LEN);
         
         /* rx_rx() will follow */
         
