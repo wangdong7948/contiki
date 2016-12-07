@@ -104,9 +104,9 @@ struct asn_divisor_t tsch_hopping_sequence_length;
 #define TSCH_DEFAULT_TS_TX_ACK_DELAY       20000
 #define TSCH_DEFAULT_TS_RX_ACK_DELAY       (TSCH_DEFAULT_TS_TX_ACK_DELAY - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_ACK_WAIT / 2))
 #define TSCH_DEFAULT_TS_RX_WAIT            (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_WAIT)
-#define TSCH_DEFAULT_TS_RX_TX              2072
-#define TSCH_DEFAULT_TS_MAX_ACK            4000
-#define TSCH_DEFAULT_TS_MAX_TX             20320
+#define TSCH_DEFAULT_TS_RX_TX              192
+#define TSCH_DEFAULT_TS_MAX_ACK            3840 /* 24 bytes at 50 kbps */
+#define TSCH_DEFAULT_TS_MAX_TX             20320 /* 127 bytes at 50 kbps */
 /* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK */
 #define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    52000
 
