@@ -87,6 +87,8 @@ typedef struct cc1200_rf_cfg {
   /* The RSSI offset in dBm.
    * -99 when MDMCFG1.DVGA_GAIN=00, -81 when MDMCFG1.DVGA_GAIN=01 */
   int8_t rssi_offset;
+  /* The bitrate in bps */
+  uint32_t bitrate;
 } cc1200_rf_cfg_t;
 /*---------------------------------------------------------------------------*/
 #endif /* CC1200_RF_CFG_H  */

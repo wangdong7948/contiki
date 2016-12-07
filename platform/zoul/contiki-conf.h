@@ -76,6 +76,7 @@ typedef uint32_t uip_stats_t;
 typedef uint32_t rtimer_clock_t;
 #define RTIMER_CLOCK_DIFF(a, b)     ((int32_t)((a) - (b)))
 
+unsigned radio_byte_air_time(void);
 unsigned radio_delay_before_tx(void);
 unsigned radio_delay_before_rx(void);
 unsigned radio_delay_before_detect(void);
@@ -94,6 +95,7 @@ unsigned radio_delay_before_detect(void);
 #define CC1200_DELAY_BEFORE_RX     ((unsigned)US_TO_RTIMERTICKS(400))
 #define CC1200_DELAY_BEFORE_DETECT (0)
 
+#define RADIO_BYTE_AIR_TIME       radio_byte_air_time()
 #define RADIO_DELAY_BEFORE_TX     radio_delay_before_tx()
 #define RADIO_DELAY_BEFORE_RX     radio_delay_before_rx()
 #define RADIO_DELAY_BEFORE_DETECT radio_delay_before_detect()

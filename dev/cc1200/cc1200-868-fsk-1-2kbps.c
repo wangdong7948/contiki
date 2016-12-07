@@ -133,5 +133,6 @@ const cc1200_rf_cfg_t cc1200_868_fsk_1_2kbps = {
   .max_txpower = RF_CFG_MAX_TXPOWER,
   .cca_threshold = RF_CFG_CCA_THRESHOLD,
   .rssi_offset = RF_CFG_RSSI_OFFSET,
+  .bitrate = 1200,
 };
 /*---------------------------------------------------------------------------*/

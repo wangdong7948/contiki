@@ -1268,6 +1268,10 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)CC1200_RF_CFG.max_txpower;
     return RADIO_RESULT_OK;
 
+  case RADIO_CONST_BYTE_AIR_TIME:
+      *value = (radio_value_t)8*1000*1000 / CC1200_RF_CFG.bitrate;
+      return RADIO_RESULT_OK;
+
   case RADIO_CONST_DELAY_BEFORE_TX:
     *value = (radio_value_t)CC1200_DELAY_BEFORE_TX;
     return RADIO_RESULT_OK;
