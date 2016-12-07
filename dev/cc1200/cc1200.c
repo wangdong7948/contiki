@@ -1882,6 +1882,11 @@ rx_rx(void)
 static int
 idle_tx_rx(uint16_t payload_len)
 {
+#if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
+  uint16_t bytes_left_to_write;
+  uint8_t to_write;
+  const uint8_t *p;
+#endif
 
   /* Prepare for RX */
   rf_flags &= ~RF_RX_PROCESSING_PKT;
