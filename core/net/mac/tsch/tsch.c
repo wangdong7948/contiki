@@ -98,7 +98,7 @@ struct asn_divisor_t tsch_hopping_sequence_length;
 
 #define TSCH_DEFAULT_TS_CCA_OFFSET         1800
 #define TSCH_DEFAULT_TS_CCA                128
-#define TSCH_DEFAULT_TS_TX_OFFSET          7000
+#define TSCH_DEFAULT_TS_TX_OFFSET          3400
 #define TSCH_DEFAULT_TS_RX_OFFSET          (TSCH_DEFAULT_TS_TX_OFFSET - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_WAIT / 2))
 #define TSCH_DEFAULT_TS_ACK_WAIT           (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_ACK_WAIT)
 #define TSCH_DEFAULT_TS_TX_ACK_DELAY       20000
