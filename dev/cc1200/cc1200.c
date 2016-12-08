@@ -387,6 +387,8 @@ extern const cc1200_rf_cfg_t CC1200_RF_CFG;
 static volatile uint8_t spi_locked = 0;
 /* The number of bytes waiting in tx_pkt */
 static uint16_t tx_pkt_len;
+/* Number of bytes from tx_pkt left to write to FIFO */
+uint16_t bytes_left_to_write;
 /* Packet buffer for reception */
 static uint8_t rx_pkt[CC1200_MAX_PAYLOAD_LEN + APPENDIX_LEN];
 /* The number of bytes placed in rx_pkt */
@@ -547,9 +549,11 @@ calculate_freq(uint8_t channel);
 /* Update rf channel if possible, else postpone it (-> pollhandler). */
 static int
 set_channel(uint8_t channel);
+#if !CC1200_NO_HDR_CHECK
 /* Validate address and send ACK if requested. */
 static int
 addr_check_auto_ack(uint8_t *frame, uint16_t frame_len);
+#endif
 /*---------------------------------------------------------------------------*/
 /* Handle tasks left over from rx interrupt or because SPI was locked */
 static void pollhandler(void);
@@ -717,9 +721,8 @@ static int
 prepare(const void *payload, unsigned short payload_len)
 {
 #if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
-  uint16_t bytes_left_to_write;
   uint8_t to_write;
-  const uint8_t *p;
+  //const uint8_t *p;
 #endif
 
   uint8_t was_on = rf_flags & RF_ON;
@@ -783,7 +786,8 @@ prepare(const void *payload, unsigned short payload_len)
   to_write = MIN(payload_len, (CC1200_FIFO_SIZE - PHR_LEN));
   burst_write(CC1200_TXFIFO, payload, to_write);
   bytes_left_to_write = payload_len - to_write;
-  p = payload + to_write;
+  /* TODO: split prepare/transmit does not support larger payloads yet. Just truncate for now..
+  p = payload + to_write;*/
 #else
   burst_write(CC1200_TXFIFO, payload, payload_len);
 #endif
@@ -1890,7 +1894,6 @@ static int
 idle_tx_rx(uint16_t payload_len)
 {
 #if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
-  uint16_t bytes_left_to_write;
   uint8_t to_write;
   const uint8_t *p;
 #endif
@@ -1943,6 +1946,9 @@ idle_tx_rx(uint16_t payload_len)
 
 #if (CC1200_MAX_PAYLOAD_LEN > (CC1200_FIFO_SIZE - PHR_LEN))
   if(bytes_left_to_write != 0) {
+    /* TODO: split prepare/transmit does not support larger payloads yet */
+    return RADIO_TX_ERR;
+
     rtimer_clock_t t0;
     uint8_t s;
     t0 = RTIMER_NOW();
@@ -2145,6 +2151,7 @@ set_channel(uint8_t channel)
   return CHANNEL_UPDATE_SUCCEEDED;
 
 }
+#if !CC1200_NO_HDR_CHECK
 /*---------------------------------------------------------------------------*/
 /* Check broadcast address. */
 static int
@@ -2232,6 +2239,7 @@ addr_check_auto_ack(uint8_t *frame, uint16_t frame_len)
   return INVALID_FRAME;
 
 }
+#endif
 /*---------------------------------------------------------------------------*/
 /*
  * The CC1200 interrupt handler: called by the hardware interrupt
@@ -2342,7 +2350,7 @@ cc1200_rx_interrupt(void)
     }
 
     burst_read(CC1200_RXFIFO,
-               &phr,
+               (uint8_t*)&phr,
                PHR_LEN);
     payload_len = (phr.phra & 0x07);
     payload_len <<= 8;
