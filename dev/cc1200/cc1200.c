@@ -722,6 +722,8 @@ prepare(const void *payload, unsigned short payload_len)
   const uint8_t *p;
 #endif
 
+  uint8_t was_on = rf_flags & RF_ON;
+
   INFO("RF: Prepare (%d)\n", payload_len);
   idle();
 
@@ -785,6 +787,11 @@ prepare(const void *payload, unsigned short payload_len)
 #else
   burst_write(CC1200_TXFIFO, payload, payload_len);
 #endif
+
+  if(was_on) {
+    /* Leave idle state */
+    idle_calibrate_rx();
+  }
 
   return 0;
 }
