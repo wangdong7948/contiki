@@ -2438,8 +2438,10 @@ cc1200_rx_interrupt(void)
         WARNING("RF: Packet pending!\n");
       } else {
 
-        int ret = addr_check_auto_ack(buf, bytes_read);
-        //ret = ADDR_CHECK_OK;
+        int ret = ADDR_CHECK_OK;
+#if !CC1200_NO_HDR_CHECK
+        addr_check_auto_ack(buf, bytes_read);
+#endif /* !CC1200_NO_HDR_CHECK */
 
         if((ret == ADDR_CHECK_OK) ||
            (ret == ADDR_CHECK_OK_ACK_SEND)) {
