@@ -137,7 +137,11 @@ static uint8_t volatile poll_mode = 0;
 /* Use GPIO2 as RX / TX FIFO threshold indicator pin */
 #define GPIO2_IOCFG                     CC1200_IOCFG_RXFIFO_THR
 /* This is the FIFO threshold we use */
+#if CC1200_802154G
+#define FIFO_THRESHOLD                  1
+#else
 #define FIFO_THRESHOLD                  0
+#endif
 /* Turn on RX after packet reception */
 #define RXOFF_MODE_RX                   1
 /* Let the CC1200 append RSSI + LQI */
@@ -644,9 +648,11 @@ pollhandler(void)
     len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
     if(len > 0) {
+      static uint32_t counter;
       packetbuf_set_datalen(len);
-      printf("cc1200: Received %u, %d dBm\n",
-            packetbuf_datalen(), (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+      memcpy(&counter, packetbuf_dataptr(), sizeof(counter));
+      printf("cc1200: Received %u %u, %d dBm\n",
+            packetbuf_datalen(), (unsigned) counter, (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
       NETSTACK_RDC.input();
     }
 
@@ -1277,6 +1283,18 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_CONST_TXPOWER_MAX:
 
     *value = (radio_value_t)CC1200_RF_CFG.max_txpower;
+    return RADIO_RESULT_OK;
+
+  case RADIO_CONST_PHY_OVERHEAD:
+#if CC1200_802154G
+#if CC1200_802154G_CRC16
+    *value = (radio_value_t)4; /* 2 bytes PHR, 2 bytes CRC */
+#else
+    *value = (radio_value_t)6; /* 2 bytes PHR, 4 bytes CRC */
+#endif
+#else
+    *value = (radio_value_t)3; /* 1 len byte, 2 bytes CRC */
+#endif
     return RADIO_RESULT_OK;
 
   case RADIO_CONST_BYTE_AIR_TIME:

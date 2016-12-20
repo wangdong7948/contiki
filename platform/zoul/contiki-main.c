@@ -87,6 +87,13 @@
 #endif
 /*---------------------------------------------------------------------------*/
 unsigned
+radio_phy_overhead(void) {
+  radio_value_t ret;
+  NETSTACK_RADIO.get_value(RADIO_CONST_PHY_OVERHEAD, &ret);
+  return (unsigned)ret;
+}
+/*---------------------------------------------------------------------------*/
+unsigned
 radio_byte_air_time(void) {
   radio_value_t ret;
   NETSTACK_RADIO.get_value(RADIO_CONST_BYTE_AIR_TIME, &ret);
