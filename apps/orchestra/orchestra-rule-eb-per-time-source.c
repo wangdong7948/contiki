@@ -90,7 +90,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       tsch_schedule_add_link(sf_eb,
                              LINK_OPTION_TX,
                              LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                             my_ts, 0);
+                             my_ts, channel_offset);
     }
   }
   if(new_ts != 0xffff) {
@@ -99,7 +99,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     tsch_schedule_add_link(sf_eb,
                            link_options,
                            LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                           new_ts, 0);
+                           new_ts, channel_offset);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -113,7 +113,7 @@ init(uint16_t sf_handle)
   tsch_schedule_add_link(sf_eb,
                          LINK_OPTION_TX,
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                         get_node_timeslot(&linkaddr_node_addr), 0);
+                         get_node_timeslot(&linkaddr_node_addr), channel_offset);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule eb_per_time_source = {

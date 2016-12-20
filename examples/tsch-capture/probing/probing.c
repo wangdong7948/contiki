@@ -70,6 +70,9 @@ PROCESS_THREAD(unicast_test_process, ev, data)
     }
   }
 
+  etimer_set(&et, 30 * CLOCK_SECOND);
+  PROCESS_WAIT_UNTIL(etimer_expired(&et));
+
   tsch_set_coordinator(node_id == ROOT_ID);
   NETSTACK_MAC.on();
   orchestra_init();

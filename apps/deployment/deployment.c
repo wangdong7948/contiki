@@ -1196,6 +1196,7 @@ deployment_init(int root_id)
       || node_id == 244
       || node_id == 246
       || node_id == 248
+      || node_id == 0
       ) {
   /*if(node_id == 0) {*/
     NETSTACK_RADIO.off();

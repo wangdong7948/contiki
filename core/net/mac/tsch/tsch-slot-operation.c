@@ -941,6 +941,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   /* Loop over all active slots */
   while(tsch_is_associated) {
 
+    /* Wait until actual slot start. Normally no wait or max 1 tick, depending on the platform */
+    if(RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start)) {
+      BUSYWAIT_UNTIL_ABS(0, current_slot_start, 0);
+    }
+
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
