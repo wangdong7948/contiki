@@ -273,6 +273,12 @@ rf2xx_wr_transmit(unsigned short transmit_len)
     // Start TX
     rf2xx_slp_tr_set(RF2XX_DEVICE);
 
+    if(rf2xx_on) {
+      ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
+    } else {
+      ENERGEST_ON(ENERGEST_TYPE_TRANSMIT);
+    }
+
     if(!RF2XX_WITH_TSCH) {
       // Wait until the end of the packet
       while (rf2xx_state == RF_TX);
@@ -284,6 +290,11 @@ rf2xx_wr_transmit(unsigned short transmit_len)
       ret = RADIO_TX_OK;
     }
 
+    if(rf2xx_on) {
+       ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
+    } else {
+       ENERGEST_OFF(ENERGEST_TYPE_TRANSMIT);
+    }
 
 #ifdef RF2XX_LEDS_ON
     leds_off(LEDS_RED);
@@ -830,6 +841,7 @@ static void idle(void)
         reg &= ~RF2XX_TRX_CTRL_1_MASK__PA_EXT_EN;
         rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__TRX_CTRL_1, reg);
     }
+    ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -861,6 +873,7 @@ static void listen(void)
     rf2xx_state = RF_LISTEN;
     rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__RX_ON);
     platform_exit_critical();
+    ENERGEST_ON(ENERGEST_TYPE_LISTEN);
 }
 
 /*---------------------------------------------------------------------------*/

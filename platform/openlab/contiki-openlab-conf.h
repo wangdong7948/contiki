@@ -32,6 +32,10 @@
 
 #include <stdint.h>
 
+#ifndef ENERGEST_CONF_ON
+#define ENERGEST_CONF_ON 1
+#endif /* ENERGEST_CONF_ON */
+
 /* ---------------------------------------- */
 /*
  *  Clock module and rtimer support

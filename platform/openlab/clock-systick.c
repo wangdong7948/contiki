@@ -60,6 +60,7 @@ static void clock_alarm(handler_arg_t arg)
     {
 	clock_sec ++;
 	clock_sec_cnt = 0;
+  energest_flush();
     }
 }
 
