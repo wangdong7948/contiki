@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2015, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,55 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
  */
-
 /**
  * \file
- *         Functions for manipulating Rime addresses
- * \author
- *         Adam Dunkels <adam@sics.se>
+ *         Orchestra: a slotframe with a single shared link, common to all nodes
+ *         in the network, used for unicast and broadcast.
+ *
+ * \author Simon Duquennoy <simonduq@sics.se>
  */
 
-/**
- * \addtogroup linkaddr
- * @{
- */
+#include "contiki.h"
+#include "orchestra.h"
 
-#include "contiki-conf.h"
-#include "net/linkaddr.h"
-#include <string.h>
-
-linkaddr_t linkaddr_node_addr;
-#if LINKADDR_SIZE == 2
-const linkaddr_t linkaddr_null = { { 0, 0 } };
-#else /*LINKADDR_SIZE == 2*/
-#if LINKADDR_SIZE == 8
-const linkaddr_t linkaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*LINKADDR_SIZE == 8*/
-#endif /*LINKADDR_SIZE == 2*/
-
+static uint16_t slotframe_handle = 0;
+static uint16_t channel_offset = 0;
 
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_copy(linkaddr_t *dest, const linkaddr_t *src)
+static int
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
-	memcpy(dest, src, LINKADDR_SIZE);
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME) {
+    if(slotframe != NULL) {
+      *slotframe = slotframe_handle;
+    }
+    if(timeslot != NULL) {
+      *timeslot = 0;
+    }
+    return 1;
+  }
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
-int
-linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2)
+static void
+init(uint16_t sf_handle)
 {
-	return (memcmp(addr1, addr2, LINKADDR_SIZE) == 0);
+  slotframe_handle = sf_handle;
+  channel_offset = slotframe_handle;
+  /* Default slotframe: for broadcast or unicast to neighbors we
+   * do not have a link to */
+  struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
+  tsch_schedule_add_link(sf_common,
+      LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
+      LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+      0, channel_offset);
 }
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_set_node_addr(linkaddr_t *t)
-{
-  linkaddr_copy(&linkaddr_node_addr, t);
-}
-/*---------------------------------------------------------------------------*/
-/** @} */
+struct orchestra_rule eb_common = {
+  init,
+  NULL,
+  select_packet,
+  NULL,
+  NULL,
+};

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2016, Inria.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,47 +32,48 @@
 
 /**
  * \file
- *         Functions for manipulating Rime addresses
+ *         An example of Rime/TSCH
  * \author
- *         Adam Dunkels <adam@sics.se>
+ *         Simon Duquennoy <simon.duquennoy@inria.fr>
+ *
  */
 
-/**
- * \addtogroup linkaddr
- * @{
- */
-
+#include <stdio.h>
 #include "contiki-conf.h"
-#include "net/linkaddr.h"
-#include <string.h>
-
-linkaddr_t linkaddr_node_addr;
-#if LINKADDR_SIZE == 2
-const linkaddr_t linkaddr_null = { { 0, 0 } };
-#else /*LINKADDR_SIZE == 2*/
-#if LINKADDR_SIZE == 8
-const linkaddr_t linkaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*LINKADDR_SIZE == 8*/
-#endif /*LINKADDR_SIZE == 2*/
-
+#include "net/netstack.h"
+#include "net/net-debug.h"
+#include "net/rime/rime.h"
+#include "net/mac/tsch/tsch.h"
+#include "deployment.h"
+#include "lib/random.h"
+#include "orchestra.h"
 
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_copy(linkaddr_t *dest, const linkaddr_t *src)
+PROCESS(unicast_test_process, "Rime Probing Node");
+AUTOSTART_PROCESSES(&unicast_test_process);
+
+/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(unicast_test_process, ev, data)
 {
-	memcpy(dest, src, LINKADDR_SIZE);
+  static struct etimer et;
+  PROCESS_BEGIN();
+
+  if(deployment_init(ROOT_ID)) {
+  } else {
+    etimer_set(&et, 1 * CLOCK_SECOND);
+    while(1) {
+      printf("Info: Not running. My MAC address: ");
+      net_debug_lladdr_print((const uip_lladdr_t *)&linkaddr_node_addr);
+      printf("\n");
+      PROCESS_WAIT_UNTIL(etimer_expired(&et));
+      etimer_reset(&et);
+    }
+  }
+
+  tsch_set_coordinator(node_id == ROOT_ID);
+  NETSTACK_MAC.on();
+  orchestra_init();
+
+  PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
-int
-linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2)
-{
-	return (memcmp(addr1, addr2, LINKADDR_SIZE) == 0);
-}
-/*---------------------------------------------------------------------------*/
-void
-linkaddr_set_node_addr(linkaddr_t *t)
-{
-  linkaddr_copy(&linkaddr_node_addr, t);
-}
-/*---------------------------------------------------------------------------*/
-/** @} */

@@ -1,0 +1,9 @@
+CONTIKI_PROJECT = test
+all: $(CONTIKI_PROJECT)
+CFLAGS += -DSOFT_TIMER_FREQUENCY=1000000L
+CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
+
+CONTIKI_WITH_RIME = 1
+
+CONTIKI = ../../..
+include $(CONTIKI)/Makefile.include

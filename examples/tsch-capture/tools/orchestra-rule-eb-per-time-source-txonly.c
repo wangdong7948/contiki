@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2015, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,68 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
  */
-
 /**
  * \file
- *         Functions for manipulating Rime addresses
- * \author
- *         Adam Dunkels <adam@sics.se>
+
+ *         Orchestra: a slotframe dedicated to transmission of EBs.
+ *         Nodes transmit at a timeslot defined as hash(MAC) % ORCHESTRA_EBSF_PERIOD
+ *         Nodes listen at a timeslot defined as hash(time_source.MAC) % ORCHESTRA_EBSF_PERIOD
+ * \author Simon Duquennoy <simonduq@sics.se>
  */
 
-/**
- * \addtogroup linkaddr
- * @{
- */
+#include "contiki.h"
+#include "orchestra.h"
+#include "net/packetbuf.h"
 
-#include "contiki-conf.h"
-#include "net/linkaddr.h"
-#include <string.h>
-
-linkaddr_t linkaddr_node_addr;
-#if LINKADDR_SIZE == 2
-const linkaddr_t linkaddr_null = { { 0, 0 } };
-#else /*LINKADDR_SIZE == 2*/
-#if LINKADDR_SIZE == 8
-const linkaddr_t linkaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*LINKADDR_SIZE == 8*/
-#endif /*LINKADDR_SIZE == 2*/
-
+static uint16_t slotframe_handle = 0;
+static uint16_t channel_offset = 0;
+static struct tsch_slotframe *sf_eb;
 
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_copy(linkaddr_t *dest, const linkaddr_t *src)
+static uint16_t
+get_node_timeslot(const linkaddr_t *addr)
 {
-	memcpy(dest, src, LINKADDR_SIZE);
+#if ORCHESTRA_EBSF_PERIOD > 0
+  return addr != NULL ? (ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD) : -1;
+#else
+  return 0xffff;
+#endif
 }
 /*---------------------------------------------------------------------------*/
-int
-linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2)
+static int
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
-	return (memcmp(addr1, addr2, LINKADDR_SIZE) == 0);
+  /* Select EBs only */
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME) {
+    if(slotframe != NULL) {
+      *slotframe = slotframe_handle;
+    }
+    if(timeslot != NULL) {
+      *timeslot = get_node_timeslot(&linkaddr_node_addr);
+    }
+    return 1;
+  }
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_set_node_addr(linkaddr_t *t)
+static void
+init(uint16_t sf_handle)
 {
-  linkaddr_copy(&linkaddr_node_addr, t);
+  slotframe_handle = sf_handle;
+  channel_offset = sf_handle;
+  sf_eb = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
+  /* EB link: every neighbor uses its own to avoid contention */
+  tsch_schedule_add_link(sf_eb,
+                         LINK_OPTION_TX,
+                         LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
+                         get_node_timeslot(&linkaddr_node_addr), channel_offset);
 }
 /*---------------------------------------------------------------------------*/
-/** @} */
+struct orchestra_rule eb_per_time_source_listen_txonly = {
+  init,
+  NULL,
+  select_packet,
+  NULL,
+  NULL,
+};

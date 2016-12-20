@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2006, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,47 +32,55 @@
 
 /**
  * \file
- *         Functions for manipulating Rime addresses
+ *         A very simple Contiki application showing how Contiki programs look
  * \author
  *         Adam Dunkels <adam@sics.se>
  */
 
-/**
- * \addtogroup linkaddr
- * @{
- */
+#include "contiki.h"
+#include "sys/rtimer.h"
 
-#include "contiki-conf.h"
-#include "net/linkaddr.h"
-#include <string.h>
+#include <stdio.h> /* For printf() */
+/*---------------------------------------------------------------------------*/
+PROCESS(hello_world_process, "Hello world process");
+AUTOSTART_PROCESSES(&hello_world_process);
 
-linkaddr_t linkaddr_node_addr;
-#if LINKADDR_SIZE == 2
-const linkaddr_t linkaddr_null = { { 0, 0 } };
-#else /*LINKADDR_SIZE == 2*/
-#if LINKADDR_SIZE == 8
-const linkaddr_t linkaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*LINKADDR_SIZE == 8*/
-#endif /*LINKADDR_SIZE == 2*/
+extern unsigned mycount;
+static struct etimer et;
+static struct rtimer r;
+static rtimer_clock_t target;
+static rtimer_clock_t last_hit;
+extern unsigned callback_count;
 
+static void
+rtimer_callback(struct rtimer *t, void *ptr)
+{
+  last_hit = RTIMER_NOW();
+  target += RTIMER_SECOND;
+  printf("*\n");
+  rtimer_set(&r, target, 1, rtimer_callback, NULL);
+}
 
 /*---------------------------------------------------------------------------*/
-void
-linkaddr_copy(linkaddr_t *dest, const linkaddr_t *src)
+PROCESS_THREAD(hello_world_process, ev, data)
 {
-	memcpy(dest, src, LINKADDR_SIZE);
+  PROCESS_BEGIN();
+
+  printf("Hello, world\n");
+  
+  //gps_synced_clock_init();
+
+
+  target = RTIMER_NOW() + RTIMER_SECOND;
+  rtimer_set(&r, target, 1, rtimer_callback, NULL);
+
+  etimer_set(&et, 1 * CLOCK_SECOND);
+  while(1) {
+      printf("Hello %u\n", RTIMER_NOW()/RTIMER_SECOND);
+      PROCESS_WAIT_UNTIL(etimer_expired(&et));
+      etimer_reset(&et);
+  }
+
+  PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
-int
-linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2)
-{
-	return (memcmp(addr1, addr2, LINKADDR_SIZE) == 0);
-}
-/*---------------------------------------------------------------------------*/
-void
-linkaddr_set_node_addr(linkaddr_t *t)
-{
-  linkaddr_copy(&linkaddr_node_addr, t);
-}
-/*---------------------------------------------------------------------------*/
-/** @} */

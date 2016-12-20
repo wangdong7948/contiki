@@ -43,13 +43,14 @@
 static uint16_t slotframe_handle = 0;
 static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_eb;
+static struct tsch_slotframe *sf_eb_rx;
 
 /*---------------------------------------------------------------------------*/
 static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
 #if ORCHESTRA_EBSF_PERIOD > 0
-  return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD;
+  return addr != NULL ? (ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD) : -1;
 #else
   return 0xffff;
 #endif
@@ -72,38 +73,6 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 }
 /*---------------------------------------------------------------------------*/
 static void
-new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
-{
-  uint16_t old_ts = get_node_timeslot(&old->addr);
-  uint16_t new_ts = get_node_timeslot(&new->addr);
-  uint16_t my_ts = get_node_timeslot(&linkaddr_node_addr);
-
-  if(old != NULL && new_ts == old_ts) {
-    return;
-  }
-
-  if(old_ts != 0xffff) {
-    /* Stop listening to the old time source's EBs */
-    if(old_ts != my_ts) {
-      tsch_schedule_remove_link_by_timeslot(sf_eb, old_ts);
-    } else {
-      tsch_schedule_add_link(sf_eb,
-                             LINK_OPTION_TX,
-                             LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                             my_ts, 0);
-    }
-  }
-  if(new_ts != 0xffff) {
-    uint8_t link_options = (new_ts == my_ts) ? LINK_OPTION_TX | LINK_OPTION_RX : LINK_OPTION_RX;
-    /* Listen to the time source's EBs */
-    tsch_schedule_add_link(sf_eb,
-                           link_options,
-                           LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                           new_ts, 0);
-  }
-}
-/*---------------------------------------------------------------------------*/
-static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
@@ -113,12 +82,18 @@ init(uint16_t sf_handle)
   tsch_schedule_add_link(sf_eb,
                          LINK_OPTION_TX,
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                         get_node_timeslot(&linkaddr_node_addr), 0);
+                         get_node_timeslot(&linkaddr_node_addr), channel_offset);
+  /* Listen to all */
+  sf_eb_rx = tsch_schedule_add_slotframe(slotframe_handle + 16, 1);
+    tsch_schedule_add_link(sf_eb_rx,
+    LINK_OPTION_RX,
+    LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
+    0, channel_offset);
 }
 /*---------------------------------------------------------------------------*/
-struct orchestra_rule eb_per_time_source = {
+struct orchestra_rule eb_per_time_source_listen_all = {
   init,
-  new_time_source,
+  NULL,
   select_packet,
   NULL,
   NULL,

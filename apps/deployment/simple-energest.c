@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2014, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,60 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
  */
-
 /**
  * \file
- *         Functions for manipulating Rime addresses
- * \author
- *         Adam Dunkels <adam@sics.se>
+ *         A process that periodically prints out the time spent in
+ *         radio tx, radio rx, total time and duty cycle.
+ *
+ * \author Simon Duquennoy <simonduq@sics.se>
  */
 
-/**
- * \addtogroup linkaddr
- * @{
- */
+#include "contiki.h"
+#include "node-id.h"
+#include "simple-energest.h"
+#include <stdio.h>
+#include <limits.h>
 
-#include "contiki-conf.h"
-#include "net/linkaddr.h"
-#include <string.h>
-
-linkaddr_t linkaddr_node_addr;
-#if LINKADDR_SIZE == 2
-const linkaddr_t linkaddr_null = { { 0, 0 } };
-#else /*LINKADDR_SIZE == 2*/
-#if LINKADDR_SIZE == 8
-const linkaddr_t linkaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*LINKADDR_SIZE == 8*/
-#endif /*LINKADDR_SIZE == 2*/
-
+static uint32_t last_tx, last_rx, last_time;
+static uint32_t delta_tx, delta_rx, delta_time;
+static uint32_t curr_tx, curr_rx, curr_time;
 
 /*---------------------------------------------------------------------------*/
 void
-linkaddr_copy(linkaddr_t *dest, const linkaddr_t *src)
+simple_energest_init()
 {
-	memcpy(dest, src, LINKADDR_SIZE);
-}
-/*---------------------------------------------------------------------------*/
-int
-linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2)
-{
-	return (memcmp(addr1, addr2, LINKADDR_SIZE) == 0);
+  energest_flush();
+  last_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT);
+  last_rx = energest_type_time(ENERGEST_TYPE_LISTEN);
+  last_time = energest_type_time(ENERGEST_TYPE_CPU) + energest_type_time(ENERGEST_TYPE_LPM);
 }
 /*---------------------------------------------------------------------------*/
 void
-linkaddr_set_node_addr(linkaddr_t *t)
+simple_energest_step(int verbose)
 {
-  linkaddr_copy(&linkaddr_node_addr, t);
+  static uint16_t cnt;
+  energest_flush();
+
+  curr_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT);
+  curr_rx = energest_type_time(ENERGEST_TYPE_LISTEN);
+  curr_time = energest_type_time(ENERGEST_TYPE_CPU) + energest_type_time(ENERGEST_TYPE_LPM);
+
+  delta_tx = curr_tx - last_tx;
+  delta_rx = curr_rx - last_rx;
+  delta_time = curr_time - last_time;
+
+  last_tx = curr_tx;
+  last_rx = curr_rx;
+  last_time = curr_time;
+
+  if(verbose) {
+    uint32_t fraction = (1000ul * (delta_tx + delta_rx)) / delta_time;
+    printf("Duty Cycle: [%u %u] %10lu +%10lu /%10lu (%lu permil)\n",
+                 node_id,
+                 cnt++,
+                 delta_tx, delta_rx, delta_time,
+                 fraction
+                 );
+  }
 }
-/*---------------------------------------------------------------------------*/
-/** @} */
