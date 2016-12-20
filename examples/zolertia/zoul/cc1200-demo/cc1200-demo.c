@@ -86,10 +86,21 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
 
   etimer_set(&et, LOOP_INTERVAL);
 
-  if(linkaddr_node_addr.u8[0] == 180 && linkaddr_node_addr.u8[1] == 73) {
+  /* Radio Tx mode: disable CCA */
+  radio_value_t radio_tx_mode;
+  NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode);
+  radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
+  NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode);
+
+  /*if(linkaddr_node_addr.u8[0] == 180 && linkaddr_node_addr.u8[1] == 73) {*/ // NODE 16
+  /*if(linkaddr_node_addr.u8[0] == 177 && linkaddr_node_addr.u8[1] == 53) {*/ // NODE 17
+  /*if(linkaddr_node_addr.u8[0] == 182 && linkaddr_node_addr.u8[1] == 20) {*/ // NODE 1
+     if(linkaddr_node_addr.u8[0] == 178 && linkaddr_node_addr.u8[1] == 21) { // NODE 18
+  //if(linkaddr_node_addr.u8[1] == 0xcc) {
     while(1) {
       PROCESS_YIELD();
       if(ev == PROCESS_EVENT_TIMER) {
+        //printf("Broadcast --> %u [%u %u]\n", (unsigned)counter, linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
         printf("Broadcast --> %u\n", (unsigned)counter);
         leds_toggle(LEDS_RED);
         //packetbuf_copyfrom(&counter, sizeof(counter));
