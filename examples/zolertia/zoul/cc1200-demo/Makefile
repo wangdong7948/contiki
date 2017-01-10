@@ -3,6 +3,9 @@ CONTIKI_PROJECT = cc1200-demo
 
 all: $(CONTIKI_PROJECT)
 
+TARGET ?= zoul
+BOARD ?= firefly
+
 CONTIKI = ../../../..
 CONTIKI_WITH_RIME = 1
 include $(CONTIKI)/Makefile.include
