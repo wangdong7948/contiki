@@ -1261,6 +1261,18 @@ get_value(radio_param_t param, radio_value_t *value)
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_RSSI:
+    {
+    int8_t rssi0;
+    /* Wait for CARRIER_SENSE_VALID signal */
+    BUSYWAIT_UNTIL(((rssi0 = single_read(CC1200_RSSI0))
+                  & CC1200_CARRIER_SENSE_VALID),
+                  RTIMER_SECOND / 100);
+    RF_ASSERT(rssi0 & CC1200_CARRIER_SENSE_VALID);
+    *value = (radio_value_t)rssi0;
+    }
+  
+    return RADIO_RESULT_OK;
+  
   case RADIO_PARAM_64BIT_ADDR:
 
     return RADIO_RESULT_NOT_SUPPORTED;

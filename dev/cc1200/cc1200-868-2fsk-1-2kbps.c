@@ -41,10 +41,10 @@
  * cc1200 at 1.2 kbps, 2-FSK, 12.5 kHz Channel Spacing (868 MHz).
  */
 
-/* Base frequency in kHz */
-#define RF_CFG_CHAN_CENTER_F0           867787
-/* Channel spacing in Hz */
-#define RF_CFG_CHAN_SPACING             12500
+ /* Base frequency in kHz */
+ #define RF_CFG_CHAN_CENTER_F0           863125
+ /* Channel spacing in Hz */
+ #define RF_CFG_CHAN_SPACING             200000
 /* The minimum channel */
 #define RF_CFG_MIN_CHANNEL              0
 /* The maximum channel */

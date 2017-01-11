@@ -6,6 +6,8 @@ all: $(CONTIKI_PROJECT)
 TARGET ?= zoul
 BOARD ?= firefly
 
+CFLAGS += -DCUSTOM_CHANNEL=$(CHANNEL)
+
 CONTIKI = ../../../..
 CONTIKI_WITH_RIME = 1
 include $(CONTIKI)/Makefile.include

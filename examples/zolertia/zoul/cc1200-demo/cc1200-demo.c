@@ -55,7 +55,7 @@
 #include <stdint.h>
 /*---------------------------------------------------------------------------*/
 #define LOOP_PERIOD         1
-#define LOOP_INTERVAL       (CLOCK_SECOND * LOOP_PERIOD)
+#define LOOP_INTERVAL       ((CLOCK_SECOND * LOOP_PERIOD) / 4)
 #define BROADCAST_CHANNEL   129
 /*---------------------------------------------------------------------------*/
 static struct etimer et;
@@ -91,6 +91,9 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
   NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode);
   radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
   NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode);
+#undef CUSTOM_CHANNEL
+#define CUSTOM_CHANNEL 8
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, CUSTOM_CHANNEL);
 
   while(1) {
     PROCESS_YIELD();
