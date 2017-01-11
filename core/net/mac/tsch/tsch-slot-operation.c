@@ -58,6 +58,7 @@
 #include "lib/simEnvChange.h"
 #include "sys/cooja_mt.h"
 #endif /* CONTIKI_TARGET_COOJA || CONTIKI_TARGET_COOJA_IP64 */
+#include "dev/multiradio.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
@@ -971,6 +972,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
+        /* Select radio */
+        multiradio_select(tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle)->radio);
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "select %p", tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle)->radio););
         /* Hop channel */
         current_channel = tsch_calculate_channel(&current_asn, current_link->channel_offset);
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);

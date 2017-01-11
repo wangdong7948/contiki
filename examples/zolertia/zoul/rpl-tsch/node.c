@@ -46,6 +46,7 @@
 #if WITH_ORCHESTRA
 #include "orchestra.h"
 #endif /* WITH_ORCHESTRA */
+#include "dev/multiradio.h"
 
 #define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
@@ -181,6 +182,11 @@ PROCESS_THREAD(node_process, ev, data)
     node_role = role_6ln;
   }
 
+  multiradio_select(&cc1200_driver);
+  NETSTACK_RADIO.off();
+  multiradio_select(&cc2538_rf_driver);
+  NETSTACK_RADIO.off();
+
   printf("Init: node starting with role %s\n",
          node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec");
 
@@ -203,10 +209,12 @@ PROCESS_THREAD(node_process, ev, data)
 
   struct tsch_slotframe *sf_subghz;
   sf_subghz = tsch_schedule_add_slotframe(0, 101);
+  sf_subghz->radio = &cc1200_driver;
   
   struct tsch_slotframe *sf_cc2538;
   sf_cc2538 = tsch_schedule_add_slotframe(1, 103);
-  
+  sf_cc2538->radio = &cc2538_rf_driver;
+    
   tsch_schedule_add_link(sf_subghz,
       LINK_OPTION_TX | LINK_OPTION_RX,
       LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,

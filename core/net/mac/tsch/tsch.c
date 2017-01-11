@@ -56,6 +56,7 @@
 #include "net/mac/tsch/tsch-security.h"
 #include "net/mac/mac-sequence.h"
 #include "lib/random.h"
+#include "dev/multiradio.h"
 
 #if FRAME802154_VERSION < FRAME802154_IEEE802154E_2012
 #error TSCH: FRAME802154_VERSION must be at least FRAME802154_IEEE802154E_2012
@@ -641,6 +642,8 @@ PT_THREAD(tsch_scan(struct pt *pt))
     int is_packet_pending = 0;
     clock_time_t now_time = clock_time();
 
+    multiradio_select(&TSCH_CONF_SCANNING_RADIO);
+
     /* Switch to a (new) channel for scanning */
     if(current_channel == 0 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {
       /* Pick a channel at random in TSCH_JOIN_HOPPING_SEQUENCE */
@@ -819,44 +822,52 @@ tsch_init(void)
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
   rtimer_clock_t t;
+  static const struct radio_driver * const radios[] = MULTIRADIO_DRIVERS;
+  static const int num_radios = sizeof(radios) / sizeof(struct radio_driver *);
+  int i;
+  
+  for(i=0; i<num_radios; i++) {
+    multiradio_select(radios[i]);
+    
+    /* Radio Rx mode */
+    if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
+      return;
+    }
+    /* Disable radio in frame filtering */
+    radio_rx_mode &= ~RADIO_RX_MODE_ADDRESS_FILTER;
+    /* Unset autoack */
+    radio_rx_mode &= ~RADIO_RX_MODE_AUTOACK;
+    /* Set radio in poll mode */
+    radio_rx_mode |= RADIO_RX_MODE_POLL_MODE;
+    if(NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support setting required RADIO_PARAM_RX_MODE. Abort init.\n");
+      return;
+    }
 
-  /* Radio Rx mode */
-  if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
-    return;
+    /* Radio Tx mode */
+    if(NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support getting RADIO_PARAM_TX_MODE. Abort init.\n");
+      return;
+    }
+    /* Unset CCA */
+    radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
+    if(NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
+      return;
+    }
+    /* Test setting channel */
+    if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support setting channel. Abort init.\n");
+      return;
+    }
+    /* Test getting timestamp */
+    if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
+      printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
+      return;
+    }
   }
-  /* Disable radio in frame filtering */
-  radio_rx_mode &= ~RADIO_RX_MODE_ADDRESS_FILTER;
-  /* Unset autoack */
-  radio_rx_mode &= ~RADIO_RX_MODE_AUTOACK;
-  /* Set radio in poll mode */
-  radio_rx_mode |= RADIO_RX_MODE_POLL_MODE;
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support setting required RADIO_PARAM_RX_MODE. Abort init.\n");
-    return;
-  }
-
-  /* Radio Tx mode */
-  if(NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support getting RADIO_PARAM_TX_MODE. Abort init.\n");
-    return;
-  }
-  /* Unset CCA */
-  radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
-    return;
-  }
-  /* Test setting channel */
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support setting channel. Abort init.\n");
-    return;
-  }
-  /* Test getting timestamp */
-  if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
-    return;
-  }
+  
   /* Check max hopping sequence length vs default sequence length */
   if(TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)) {
     printf("TSCH:! TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE). Abort init.\n");
