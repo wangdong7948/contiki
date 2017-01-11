@@ -201,22 +201,21 @@ PROCESS_THREAD(node_process, ev, data)
   orchestra_init();
 #endif /* WITH_ORCHESTRA */
 
-  /*{
   struct tsch_slotframe *sf_subghz;
-  sf_subghz = tsch_schedule_add_slotframe(0, 100);
-  if(is_coordinator) {
-    tsch_schedule_add_link(sf_subghz,
-        LINK_OPTION_TX
-        LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
-        0, 0);
-  } else {
-    tsch_schedule_add_link(sf_subghz,
-        LINK_OPTION_RX,
-        LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
-        0, 0);
-  }
-  }*/
-
+  sf_subghz = tsch_schedule_add_slotframe(0, 101);
+  
+  struct tsch_slotframe *sf_cc2538;
+  sf_cc2538 = tsch_schedule_add_slotframe(1, 103);
+  
+  tsch_schedule_add_link(sf_subghz,
+      LINK_OPTION_TX | LINK_OPTION_RX,
+      LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
+      0, 0);
+  tsch_schedule_add_link(sf_cc2538,
+      LINK_OPTION_TX | LINK_OPTION_RX,
+      LINK_TYPE_NORMAL, &tsch_broadcast_address,
+      0, 0);
+  
   /* Print out routing tables every minute */
   etimer_set(&et, CLOCK_SECOND * 60);
   while(1) {
