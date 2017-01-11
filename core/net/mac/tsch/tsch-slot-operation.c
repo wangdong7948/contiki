@@ -974,9 +974,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       if(is_active_slot) {
         /* Select radio */
         multiradio_select(tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle)->radio);
-        TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                            "select %p", tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle)->radio););
         /* Hop channel */
         current_channel = tsch_calculate_channel(&current_asn, current_link->channel_offset);
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);
