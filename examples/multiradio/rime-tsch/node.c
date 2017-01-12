@@ -81,24 +81,25 @@ PROCESS_THREAD(unicast_test_process, ev, data)
   multiradio_select(&cc2538_rf_driver);
   NETSTACK_RADIO.off();
 
+  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
+
   struct tsch_slotframe *sf_cc1200;
   sf_cc1200 = tsch_schedule_add_slotframe(0, 101);
   sf_cc1200->radio = &cc1200_driver;
   
   struct tsch_slotframe *sf_cc2538;
-  sf_cc2538 = tsch_schedule_add_slotframe(1, 103);
+  sf_cc2538 = tsch_schedule_add_slotframe(1, 101);
   sf_cc2538->radio = &cc2538_rf_driver;
     
   tsch_schedule_add_link(sf_cc1200,
-      LINK_OPTION_TX | LINK_OPTION_RX,
+      tsch_is_coordinator ? LINK_OPTION_TX : LINK_OPTION_RX,
       LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
       0, 0);
   tsch_schedule_add_link(sf_cc2538,
       LINK_OPTION_TX | LINK_OPTION_RX,
       LINK_TYPE_NORMAL, &tsch_broadcast_address,
-      0, 0);
+      3, 0);
 
-  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
   NETSTACK_MAC.on();
   
   unicast_open(&uc, 146, &unicast_callbacks);
@@ -106,7 +107,7 @@ PROCESS_THREAD(unicast_test_process, ev, data)
   while(1) {
     static struct etimer et;
 
-    etimer_set(&et, CLOCK_SECOND);
+    etimer_set(&et, 4*CLOCK_SECOND);
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
