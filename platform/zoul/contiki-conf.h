@@ -91,8 +91,7 @@ unsigned radio_delay_before_detect(void);
 #define CC2538_DELAY_BEFORE_DETECT (0)
 
 /* On cc1200 with 50 kbps config. Includes 3 Bytes preamble + 2 Bytes SFD, at 160usec per byte = 800 usec*/
-//#define CC1200_DELAY_BEFORE_TX     ((unsigned)US_TO_RTIMERTICKS(1638))
-#define CC1200_DELAY_BEFORE_TX     ((unsigned)US_TO_RTIMERTICKS(37260))
+/* CC1200_DELAY_BEFORE_TX is defined in cc1200_rf_cfg_t */
 /* Roughly measured in S/W... needs real validation */
 #define CC1200_DELAY_BEFORE_RX     ((unsigned)US_TO_RTIMERTICKS(400))
 #define CC1200_DELAY_BEFORE_DETECT (0)

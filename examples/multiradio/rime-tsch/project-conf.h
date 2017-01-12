@@ -92,8 +92,8 @@
 #define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL 0 /* No 6TiSCH minimal schedule */
 #undef  NETSTACK_CONF_RADIO
 #define NETSTACK_CONF_RADIO         cc1200_driver
-#define CC1200_CONF_RF_CFG cc1200_868_2fsk_1_2kbps
-//#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_fsk_50kbps
+//#define CC1200_CONF_RF_CFG cc1200_868_2fsk_1_2kbps
+#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_fsk_50kbps
 #define CC1200_NO_HDR_CHECK         1
 #endif /* WITH_MULTIRADIO */
 

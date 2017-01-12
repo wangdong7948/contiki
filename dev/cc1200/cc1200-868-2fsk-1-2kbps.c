@@ -77,7 +77,7 @@ static const char rf_cfg_descriptor[] = "868MHz 2-FSK 1.2 kbps";
 #define CC1200_TSCH_DEFAULT_TS_MAX_ACK          73334 /* 7+1+3 bytes at 50 kbps */
 #define CC1200_TSCH_DEFAULT_TS_MAX_TX          866667 /* 126+1+3 bytes at 50 kbps */
 /* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK + 550 usec slack */
-//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040001
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040551
 #define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000
 
 /* TSCH timeslot timing (in rtimer ticks) */
@@ -173,6 +173,8 @@ const cc1200_rf_cfg_t cc1200_868_2fsk_1_2kbps = {
   .size_of_register_settings = sizeof(preferredSettings),
   .tx_pkt_lifetime = (RTIMER_SECOND),
   .tx_rx_turnaround = (RTIMER_SECOND / 100),
+  /* Includes 3 Bytes preamble + 2 Bytes SFD, at 6667usec per byte = 33335 usec */
+  .delay_before_tx = ((unsigned)US_TO_RTIMERTICKS(37260)),
   .chan_center_freq0 = RF_CFG_CHAN_CENTER_F0,
   .chan_spacing = RF_CFG_CHAN_SPACING,
   .min_channel = RF_CFG_MIN_CHANNEL,

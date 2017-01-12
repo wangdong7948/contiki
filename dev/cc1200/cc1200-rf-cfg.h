@@ -69,6 +69,8 @@ typedef struct cc1200_rf_cfg {
   rtimer_clock_t tx_pkt_lifetime;
   /* The maximum time it takes to switch from Tx to Rx */
   rtimer_clock_t tx_rx_turnaround;
+  /* The delay between a call to transmit() and end of SFD */
+  rtimer_clock_t delay_before_tx;
   /* Base frequency in kHz */
   uint32_t chan_center_freq0;
   /* Channel spacing in Hz */

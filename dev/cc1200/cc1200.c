@@ -1314,7 +1314,7 @@ get_value(radio_param_t param, radio_value_t *value)
       return RADIO_RESULT_OK;
 
   case RADIO_CONST_DELAY_BEFORE_TX:
-    *value = (radio_value_t)CC1200_DELAY_BEFORE_TX;
+    *value = (radio_value_t)CC1200_RF_CFG.delay_before_tx;
     return RADIO_RESULT_OK;
 
   case RADIO_CONST_DELAY_BEFORE_RX:
