@@ -107,7 +107,7 @@ void tsch_disassociate(void);
 /* Calculate packet tx/rx duration in rtimer ticks based on sent
  * packet len in bytes with 802.15.4 250kbps data rate.
  * One byte = 32us. Add two bytes for CRC and one for len field */
-#define TSCH_PACKET_DURATION(len) US_TO_RTIMERTICKS(RADIO_BYTE_AIR_TIME * ((len) + RADIO_PHY_OVERHEAD))
+#define TSCH_PACKET_DURATION(len) US_TO_RTIMERTICKS_64(RADIO_BYTE_AIR_TIME * ((len) + RADIO_PHY_OVERHEAD))
 
 /* Convert rtimer ticks to clock and vice versa */
 #define TSCH_CLOCK_TO_TICKS(c) (((c) * RTIMER_SECOND) / CLOCK_SECOND)
@@ -122,6 +122,8 @@ void tsch_disassociate(void);
   };
 #else
 #define BUSYWAIT_UNTIL_ABS(cond, t0, offset) \
-  while(!(cond) && RTIMER_CLOCK_LT(RTIMER_NOW(), (t0) + (offset))) ;
+  while(!(cond) && RTIMER_CLOCK_LT(RTIMER_NOW(), (t0) + (offset))) { \
+    watchdog_periodic(); \
+  }
 #endif /* CONTIKI_TARGET_COOJA || CONTIKI_TARGET_COOJA_IP64 */
 #endif /* __TSCH_PRIVATE_H__ */

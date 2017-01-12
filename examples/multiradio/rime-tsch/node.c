@@ -98,7 +98,18 @@ PROCESS_THREAD(unicast_test_process, ev, data)
       LINK_OPTION_TX | LINK_OPTION_RX,
       LINK_TYPE_NORMAL, &tsch_broadcast_address,
       3, 0);
-#endif
+#else /* WITH_MULTIRADIO */
+struct tsch_slotframe *sf;
+sf = tsch_schedule_add_slotframe(0, 2);
+tsch_schedule_add_link(sf,
+    tsch_is_coordinator ? LINK_OPTION_TX : LINK_OPTION_RX,
+    LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
+    0, 0);
+tsch_schedule_add_link(sf,
+    LINK_OPTION_TX | LINK_OPTION_RX,
+    LINK_TYPE_NORMAL, &tsch_broadcast_address,
+    1, 0);
+#endif /* WITH_MULTIRADIO */
 
   NETSTACK_MAC.on();
   
@@ -111,7 +122,7 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    packetbuf_copyfrom("Hello", 5);
+    packetbuf_copyfrom("Hello", 111);
 
     if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
 //      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);

@@ -64,7 +64,8 @@
 static const char rf_cfg_descriptor[] = "802.15.4g 863-870MHz MR-FSK mode #1";
 /*---------------------------------------------------------------------------*/
 
-#define CC1200_TSCH_PREAMBLE_LENGTH               960
+/* 1 byte time: 160 usec */
+#define CC1200_TSCH_PREAMBLE_LENGTH               960 /* 6 bytes */
 #define CC1200_TSCH_CONF_RX_WAIT                 1000
 #define CC1200_TSCH_CONF_RX_ACK_WAIT              150
 
@@ -78,7 +79,7 @@ static const char rf_cfg_descriptor[] = "802.15.4g 863-870MHz MR-FSK mode #1";
 #define CC1200_TSCH_DEFAULT_TS_ACK_WAIT           (CC1200_TSCH_PREAMBLE_LENGTH + CC1200_TSCH_CONF_RX_ACK_WAIT)
 #define CC1200_TSCH_DEFAULT_TS_RX_TX              192
 //#define TSCH_DEFAULT_TS_MAX_ACK            3360 /* 17+1+3 bytes at 50 kbps */
-#define CC1200_TSCH_DEFAULT_TS_MAX_ACK            1760 /* 17+1+3 bytes at 50 kbps */
+#define CC1200_TSCH_DEFAULT_TS_MAX_ACK            1760 /* 7+1+3 bytes at 50 kbps */
 #define CC1200_TSCH_DEFAULT_TS_MAX_TX             20800 /* 127+3 bytes at 50 kbps */
 /* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK + 550 usec slack */
 //#define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    31210

@@ -1008,7 +1008,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     /* Do we need to resynchronize? i.e., wait for EB again */
     if(!tsch_is_coordinator && (ASN_DIFF(current_asn, last_sync_asn) >
-        (100 * TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD / 100, tsch_default_timing[tsch_ts_timeslot_length])))) {
+        (TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD, tsch_default_timing[tsch_ts_timeslot_length])))) {
       TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
                 "! leaving the network, last sync %u",
