@@ -89,6 +89,8 @@ typedef struct cc1200_rf_cfg {
   int8_t rssi_offset;
   /* The bitrate in bps */
   uint32_t bitrate;
+  /* TSCH timeslot timing */
+  rtimer_clock_t *tsch_timing;
 } cc1200_rf_cfg_t;
 /*---------------------------------------------------------------------------*/
 #endif /* CC1200_RF_CFG_H  */
