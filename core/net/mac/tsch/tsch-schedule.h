@@ -122,6 +122,8 @@ struct tsch_slotframe {
   struct asn_divisor_t size;
   /* The radio this slotframe is attached to */
   const struct radio_driver *radio;
+  /* The timeslot timing for slots in this slotframe */
+  rtimer_clock_t *tsch_timing;
   /* List of links belonging to this slotframe */
   LIST_STRUCT(links_list);
 };

@@ -76,6 +76,7 @@ typedef uint32_t uip_stats_t;
 typedef uint32_t rtimer_clock_t;
 #define RTIMER_CLOCK_DIFF(a, b)     ((int32_t)((a) - (b)))
 
+unsigned radio_phy_overhead(void);
 unsigned radio_byte_air_time(void);
 unsigned radio_delay_before_tx(void);
 unsigned radio_delay_before_rx(void);

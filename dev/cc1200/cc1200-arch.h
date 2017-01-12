@@ -36,6 +36,8 @@
 #define CC1200_ARCH_H
 
 #include <stdint.h>
+#include "net/mac/tsch/tsch-private.h"
+
 /*---------------------------------------------------------------------------*/
 /*
  * Initialize SPI module & Pins.

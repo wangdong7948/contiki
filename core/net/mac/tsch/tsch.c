@@ -93,26 +93,6 @@ NBR_TABLE(struct eb_stat, eb_stats);
 uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 struct asn_divisor_t tsch_hopping_sequence_length;
 
-#define TSCH_PREAMBLE_LENGTH               960
-#define TSCH_CONF_RX_WAIT                 1000
-#define TSCH_CONF_RX_ACK_WAIT              150
-
-#define TSCH_DEFAULT_TS_CCA_OFFSET         1800
-#define TSCH_DEFAULT_TS_CCA                128
-#define TSCH_DEFAULT_TS_TX_OFFSET          3500
-#define TSCH_DEFAULT_TS_RX_OFFSET          (TSCH_DEFAULT_TS_TX_OFFSET - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_WAIT / 2))
-#define TSCH_DEFAULT_TS_ACK_WAIT           (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_ACK_WAIT)
-#define TSCH_DEFAULT_TS_TX_ACK_DELAY       3000
-#define TSCH_DEFAULT_TS_RX_ACK_DELAY       (TSCH_DEFAULT_TS_TX_ACK_DELAY - TSCH_PREAMBLE_LENGTH - (TSCH_CONF_RX_ACK_WAIT / 2))
-#define TSCH_DEFAULT_TS_RX_WAIT            (TSCH_PREAMBLE_LENGTH + TSCH_CONF_RX_WAIT)
-#define TSCH_DEFAULT_TS_RX_TX              192
-//#define TSCH_DEFAULT_TS_MAX_ACK            3360 /* 17+1+3 bytes at 50 kbps */
-#define TSCH_DEFAULT_TS_MAX_ACK            1760 /* 17+1+3 bytes at 50 kbps */
-#define TSCH_DEFAULT_TS_MAX_TX             20800 /* 127+3 bytes at 50 kbps */
-/* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK + 550 usec slack */
-//#define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    31210
-#define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    29610
-
 /* Default TSCH timeslot timing (in micro-second) */
 static const uint16_t tsch_default_timing_us[tsch_ts_elements_count] = {
   TSCH_DEFAULT_TS_CCA_OFFSET,
@@ -129,7 +109,8 @@ static const uint16_t tsch_default_timing_us[tsch_ts_elements_count] = {
   TSCH_DEFAULT_TS_TIMESLOT_LENGTH,
 };
 /* TSCH timeslot timing (in rtimer ticks) */
-rtimer_clock_t tsch_timing[tsch_ts_elements_count];
+rtimer_clock_t tsch_default_timing[tsch_ts_elements_count];
+rtimer_clock_t *tsch_timing = tsch_default_timing;
 
 #if LINKADDR_SIZE == 8
 /* 802.15.4 broadcast MAC address  */
@@ -227,7 +208,7 @@ tsch_reset(void)
   current_link = NULL;
   /* Reset timeslot timing to defaults */
   for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+    tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
   }
 #ifdef TSCH_CALLBACK_LEAVING_NETWORK
   TSCH_CALLBACK_LEAVING_NETWORK();
@@ -506,9 +487,9 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   /* TSCH timeslot timing */
   for(i = 0; i < tsch_ts_elements_count; i++) {
     if(ies.ie_tsch_timeslot_id == 0) {
-      tsch_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+      tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
     } else {
-      tsch_timing[i] = US_TO_RTIMERTICKS(ies.ie_tsch_timeslot[i]);
+      tsch_default_timing[i] = US_TO_RTIMERTICKS(ies.ie_tsch_timeslot[i]);
     }
   }
 
@@ -645,6 +626,9 @@ PT_THREAD(tsch_scan(struct pt *pt))
     clock_time_t now_time = clock_time();
 
     multiradio_select(&TSCH_CONF_SCANNING_RADIO);
+    if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
+      tsch_timing = tsch_default_timing;
+    }
 
     /* Switch to a (new) channel for scanning */
     if(current_channel == 0 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {

@@ -972,8 +972,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
-        /* Select radio */
-        multiradio_select(tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle)->radio);
+        /* Select radio and timeslot timing */
+        struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle);
+        multiradio_select(sf->radio);
+        if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
+          tsch_timing = tsch_default_timing;
+        }
         /* Hop channel */
         current_channel = tsch_calculate_channel(&current_asn, current_link->channel_offset);
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);
@@ -1002,7 +1006,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     /* Do we need to resynchronize? i.e., wait for EB again */
     if(!tsch_is_coordinator && (ASN_DIFF(current_asn, last_sync_asn) >
-        (100 * TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD / 100, tsch_timing[tsch_ts_timeslot_length])))) {
+        (100 * TSCH_CLOCK_TO_SLOTS(TSCH_DESYNC_THRESHOLD / 100, tsch_default_timing[tsch_ts_timeslot_length])))) {
       TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
                 "! leaving the network, last sync %u",
@@ -1037,7 +1041,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Update ASN */
         ASN_INC(current_asn, timeslot_diff);
         /* Time to next wake up */
-        time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;
+        time_to_next_active_slot = timeslot_diff * tsch_default_timing[tsch_ts_timeslot_length] + drift_correction;
         drift_correction = 0;
         is_drift_correction_used = 0;
         /* Update current slot start */
@@ -1075,7 +1079,7 @@ tsch_slot_operation_start(void)
     /* Update ASN */
     ASN_INC(current_asn, timeslot_diff);
     /* Time to next wake up */
-    time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length];
+    time_to_next_active_slot = timeslot_diff * tsch_default_timing[tsch_ts_timeslot_length];
     /* Update current slot start */
     prev_slot_start = current_slot_start;
     current_slot_start += time_to_next_active_slot;
