@@ -57,15 +57,13 @@ AUTOSTART_PROCESSES(&unicast_test_process);
 static void
 recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
-  printf("App: unicast message received from %u.%u\n",
-   from->u8[0], from->u8[1]);
+  //printf("App: unicast message received from %u.%u\n", from->u8[0], from->u8[1]);
 }
 /*---------------------------------------------------------------------------*/
 static void
 sent_uc(struct unicast_conn *ptr, int status, int num_tx)
 {
-  printf("App: unicast message sent, status %u, num_tx %u\n",
-   status, num_tx);
+  //printf("App: unicast message sent, status %u, num_tx %u\n", status, num_tx);
 }
 
 static const struct unicast_callbacks unicast_callbacks = { recv_uc, sent_uc };
@@ -76,12 +74,13 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 {
   PROCESS_BEGIN();
 
+  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
+
+#if WITH_MULTIRADIO
   multiradio_select(&cc1200_driver);
   NETSTACK_RADIO.off();
   multiradio_select(&cc2538_rf_driver);
   NETSTACK_RADIO.off();
-
-  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
 
   struct tsch_slotframe *sf_cc1200;
   sf_cc1200 = tsch_schedule_add_slotframe(0, 101);
@@ -99,6 +98,7 @@ PROCESS_THREAD(unicast_test_process, ev, data)
       LINK_OPTION_TX | LINK_OPTION_RX,
       LINK_TYPE_NORMAL, &tsch_broadcast_address,
       3, 0);
+#endif
 
   NETSTACK_MAC.on();
   
@@ -114,7 +114,7 @@ PROCESS_THREAD(unicast_test_process, ev, data)
     packetbuf_copyfrom("Hello", 5);
 
     if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
-      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
+//      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
       unicast_send(&uc, &destination_addr);
     }
   }

@@ -207,8 +207,14 @@ tsch_reset(void)
   ASN_INIT(current_asn, 0, 0);
   current_link = NULL;
   /* Reset timeslot timing to defaults */
-  for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+  if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+    }
+  } else {
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_default_timing[i] = tsch_timing[i];
+    }
   }
 #ifdef TSCH_CALLBACK_LEAVING_NETWORK
   TSCH_CALLBACK_LEAVING_NETWORK();
@@ -487,7 +493,11 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   /* TSCH timeslot timing */
   for(i = 0; i < tsch_ts_elements_count; i++) {
     if(ies.ie_tsch_timeslot_id == 0) {
-      tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+      if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
+        tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+      } else {
+        tsch_default_timing[i] = tsch_timing[i];
+      }
     } else {
       tsch_default_timing[i] = US_TO_RTIMERTICKS(ies.ie_tsch_timeslot[i]);
     }
@@ -625,7 +635,9 @@ PT_THREAD(tsch_scan(struct pt *pt))
     int is_packet_pending = 0;
     clock_time_t now_time = clock_time();
 
+#if WITH_MULTIRADIO
     multiradio_select(&TSCH_CONF_SCANNING_RADIO);
+#endif
     if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
       tsch_timing = tsch_default_timing;
     }
@@ -808,13 +820,16 @@ tsch_init(void)
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
   rtimer_clock_t t;
+  
+#if WITH_MULTIRADIO
   static const struct radio_driver * const radios[] = MULTIRADIO_DRIVERS;
   static const int num_radios = sizeof(radios) / sizeof(struct radio_driver *);
   int i;
   
   for(i=0; i<num_radios; i++) {
     multiradio_select(radios[i]);
-    
+#endif
+
     /* Radio Rx mode */
     if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
       printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
@@ -852,7 +867,9 @@ tsch_init(void)
       printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
       return;
     }
+#if WITH_MULTIRADIO
   }
+#endif
   
   /* Check max hopping sequence length vs default sequence length */
   if(TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)) {
