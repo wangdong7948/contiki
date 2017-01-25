@@ -228,7 +228,7 @@ rpl_parent_is_reachable(rpl_parent_t *p) {
 }
 /*---------------------------------------------------------------------------*/
 static void
-rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
+rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p, const char *str)
 {
   if(dag != NULL && dag->preferred_parent != p) {
     PRINTF("RPL: rpl_set_preferred_parent ");
@@ -245,9 +245,9 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     }
     PRINTF("\n");
 
-    LOG("RPL: parent switch %u -> %u\n",
+    LOG("RPL: parent switch %u -> %u (%s)\n",
         dag->preferred_parent ? LOG_ID_FROM_IPADDR(rpl_get_parent_ipaddr(dag->preferred_parent)) : 0,
-            LOG_ID_FROM_IPADDR(rpl_get_parent_ipaddr(p)));
+            LOG_ID_FROM_IPADDR(rpl_get_parent_ipaddr(p)), str);
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
@@ -258,6 +258,10 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     nbr_table_unlock(rpl_parents, dag->preferred_parent);
     nbr_table_lock(rpl_parents, p);
     dag->preferred_parent = p;
+
+    if(p == NULL) {
+      rpl_print_neighbor_list();
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -402,7 +406,7 @@ rpl_set_root(uint8_t instance_id, uip_ipaddr_t *dag_id)
     return NULL;
   }
 
-  rpl_set_preferred_parent(dag, NULL);
+  rpl_set_preferred_parent(dag, NULL, "set root");
 
   memcpy(&dag->dag_id, dag_id, sizeof(dag->dag_id));
 
@@ -826,7 +830,7 @@ rpl_select_dag(rpl_instance_t *instance, rpl_parent_t *p)
 
   if(!acceptable_rank(best_dag, best_dag->rank)) {
     PRINTF("RPL: New rank unacceptable!\n");
-    rpl_set_preferred_parent(instance->current_dag, NULL);
+    rpl_set_preferred_parent(instance->current_dag, NULL, "new rank unacceptable");
     if(RPL_IS_STORING(instance) && last_parent != NULL) {
       /* Send a No-Path DAO to the removed preferred parent. */
       dao_output(last_parent, RPL_ZERO_LIFETIME);
@@ -908,16 +912,16 @@ rpl_select_parent(rpl_dag_t *dag)
   if(best != NULL) {
 #if RPL_SIWTCH_IFF_FRESH
     if(rpl_parent_is_fresh(best)) {
-      rpl_set_preferred_parent(dag, best);
+      rpl_set_preferred_parent(dag, best, "select best (fresh)");
     } else {
       /* The best is not fresh. Look for the best fresh now. */
       rpl_parent_t *best_fresh = best_parent(dag, 1);
       if(best_fresh == NULL) {
         /* No fresh parent around, use best (non-fresh) */
-        rpl_set_preferred_parent(dag, best);
+        rpl_set_preferred_parent(dag, best, "select best non-fresh");
       } else {
         /* Use best fresh */
-        rpl_set_preferred_parent(dag, best_fresh);
+        rpl_set_preferred_parent(dag, best_fresh, "selectbest  fresh");
       }
 #if RPL_WITH_PROBING
       /* Probe the best parent shortly in order to get a fresh estimate */
@@ -926,11 +930,11 @@ rpl_select_parent(rpl_dag_t *dag)
 #endif /* RPL_WITH_PROBING */
     }
 #else /* RPL_SIWTCH_IFF_FRESH */
-    rpl_set_preferred_parent(dag, best);
+    rpl_set_preferred_parent(dag, best, "select best");
     dag->rank = rpl_rank_via_parent(dag->preferred_parent);
 #endif /* RPL_SIWTCH_IFF_FRESH */
   } else {
-    rpl_set_preferred_parent(dag, NULL);
+    rpl_set_preferred_parent(dag, NULL, "no parent found");
   }
 
   dag->rank = rpl_rank_via_parent(dag->preferred_parent);
@@ -970,7 +974,7 @@ rpl_nullify_parent(rpl_parent_t *parent)
         if(RPL_IS_STORING(dag->instance)) {
           dao_output(parent, RPL_ZERO_LIFETIME);
         }
-        rpl_set_preferred_parent(dag, NULL);
+        rpl_set_preferred_parent(dag, NULL, "nullify");
       }
     }
   }
@@ -984,7 +988,7 @@ void
 rpl_move_parent(rpl_dag_t *dag_src, rpl_dag_t *dag_dst, rpl_parent_t *parent)
 {
   if(parent == dag_src->preferred_parent) {
-      rpl_set_preferred_parent(dag_src, NULL);
+      rpl_set_preferred_parent(dag_src, NULL, "move");
       dag_src->rank = INFINITE_RANK;
     if(dag_src->joined && dag_src->instance->def_route != NULL) {
       PRINTF("RPL: Removing default route ");
@@ -1159,7 +1163,7 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
   /* Copy prefix information from the DIO into the DAG object. */
   memcpy(&dag->prefix_info, &dio->prefix_info, sizeof(rpl_prefix_t));
 
-  rpl_set_preferred_parent(dag, p);
+  rpl_set_preferred_parent(dag, p, "join");
   instance->of->update_metric_container(instance);
   dag->rank = rpl_rank_via_parent(p);
   /* So far this is the lowest rank we are aware of. */
@@ -1255,7 +1259,7 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
   /* copy prefix information into the dag */
   memcpy(&dag->prefix_info, &dio->prefix_info, sizeof(rpl_prefix_t));
 
-  rpl_set_preferred_parent(dag, p);
+  rpl_set_preferred_parent(dag, p, "add dag");
   dag->rank = rpl_rank_via_parent(p);
   dag->min_rank = dag->rank; /* So far this is the lowest rank we know of. */
 

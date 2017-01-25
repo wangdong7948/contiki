@@ -206,7 +206,15 @@ tsch_set_ka_timeout(uint32_t timeout)
 void
 tsch_set_eb_period(uint32_t period)
 {
+#ifdef TSCH_WITH_AGGRESSIVE_STARTUP
+  if(clock_time() < TSCH_WITH_AGGRESSIVE_STARTUP) {
+    tsch_current_eb_period = TSCH_WITH_AGGRESSIVE_EB_PERIOD;
+  } else {
+    tsch_current_eb_period = MIN(period, TSCH_MAX_EB_PERIOD);  
+  }
+#else
   tsch_current_eb_period = MIN(period, TSCH_MAX_EB_PERIOD);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void

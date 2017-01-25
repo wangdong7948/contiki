@@ -10,7 +10,7 @@ void uart1_set_input(uart_input_handler_t input)
     uart1_input_handler = input;
 }
 
-inline uart_input_handler_t uart1_get_input_handler()
+uart_input_handler_t uart1_get_input_handler()
 {
     return uart1_input_handler;
 }

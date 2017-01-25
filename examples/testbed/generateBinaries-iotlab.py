@@ -10,15 +10,16 @@ DEP = 6
 TARGET = "iotlab-m3"
 TARGET_BIN = "iotlab-m3"
 
-DURATION = 60
-ITERATIONS = 6
+DURATION = 120
+ITERATIONS = 2
 SSH_SERVER = "duquenno@grenoble.iot-lab.info"
 
-BUID_BINARIES = False
-SCHEDULE_JOBS = True
+BUID_BINARIES = True
+SCHEDULE_JOBS = False
+NNODES = 52
 
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 1, 'rssibased': 1, 'squaredetx': 1, 'smartdup': 1}) #12+2
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 1, 'rssibased': 1, 'squaredetx': 1, 'smartdup': 1}) #12+2
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 1, 'rssibased': 1, 'squaredetx': 1, 'smartdup': 1}) #12+2 | 2* 4
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 1, 'rssibased': 1, 'squaredetx': 1, 'smartdup': 1}) #12+2 | 2* 2
 
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 1, 'rssibased': 1, 'squaredetx': 0, 'smartdup': 1}) #14
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 1, 'rssibased': 1, 'squaredetx': 0, 'smartdup': 1}) #12+2
@@ -26,27 +27,29 @@ SCHEDULE_JOBS = True
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 1, 'rssibased': 1, 'squaredetx': 0, 'smartdup': 0}) #10
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 1, 'rssibased': 1, 'squaredetx': 0, 'smartdup': 0}) #10
 
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 0, 'rssibased': 0, 'squaredetx': 0, 'smartdup': 0}) #9+1
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 0, 'rssibased': 0, 'squaredetx': 0, 'smartdup': 0}) #10
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 0, 'rssibased': 0, 'squaredetx': 0, 'smartdup': 0}) #9+1 | 2 * 2
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'probing': 0, 'rssibased': 0, 'squaredetx': 0, 'smartdup': 0}) #10
 
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx':  8}) #11+3
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx': 16}) #10+4
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx': 32}) #14
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx': 32}) #14 | 2 * 1
 
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx':  8}) #11+3
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 16}) #11+3
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 32}) #14
+configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 32}) #14
 
-configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 0, 'channels': 16, 'rtx': 8})
+#configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 0, 'channels': 16, 'rtx': 8})
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 1, 'channels': 16, 'rtx': 8})
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 1, 'channels': 4, 'rtx': 32})
-configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 1, 'squaredetx': 1, 'channels': 16, 'rtx': 8})
+#configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 1, 'squaredetx': 1, 'channels': 16, 'rtx': 8})
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 16, 'rtx': 8})
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 32})
 
 def getFileName(config):
     name = "do4s"
     #name = "atoa"
+    if NNODES != None:
+        name += "_n%d"%(NNODES)
     if 'rpl_mode' in config:
         name += "_rpl%d"%(config['rpl_mode'])
     if 'probing' in config:
@@ -86,6 +89,8 @@ if BUID_BINARIES:
                 "DEP=%d"%(DEP)
                 ]
 
+    if NNODES != None:
+        buildCmd += ["NODES=%s" %(NNODES)]
     if 'rpl_mode' in config:
         buildCmd += ["RPL_CONFIG=%s" %(config['rpl_mode'])]
     if 'probing' in config:
