@@ -166,7 +166,11 @@ Finally, one can also implement his own scheduler, centralized or distributed, b
 ## Porting TSCH to a new platform
 
 Porting TSCH to a new platform requires a few new features in the radio driver, a number of timing-related configuration paramters.
+<<<<<<< HEAD
 The easiest is probably to start from one of the existing port: `jn516x`, `sky`, `z1`, `cc2538dk`, `zoul`, `openmote-cc2538`, `srf06-cc26xx`.
+=======
+The easiest is probably to start from one of the existing port: `jn516x`, `sky`, `z1`, `cc2538dk`.
+>>>>>>> thomas-ha/tsch-cc2538-port
 
 ### Radio features required for TSCH
 
