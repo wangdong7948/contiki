@@ -49,11 +49,11 @@
 
 #include <stdint.h>
 #include <string.h>
+
+#undef COFFEE_CONF_SIZE
+#define COFFEE_CONF_SIZE    0
+
 /*---------------------------------------------------------------------------*/
-/* Include Project Specific conf */
-#ifdef PROJECT_CONF_H
-#include PROJECT_CONF_H
-#endif /* PROJECT_CONF_H */
 /*---------------------------------------------------------------------------*/
 /**
  * \name Compiler configuration and platform-specific type definitions
@@ -576,6 +576,10 @@ typedef uint32_t rtimer_clock_t;
 #define CCM_STAR_CONF           cc2538_ccm_star_driver /**< AES-CCM* driver */
 #endif
 
+/* Include Project Specific conf */
+#ifdef PROJECT_CONF_H
+#include PROJECT_CONF_H
+#endif /* PROJECT_CONF_H */
 /*---------------------------------------------------------------------------*/
 #endif /* CONTIKI_CONF_H_ */
 /*---------------------------------------------------------------------------*/

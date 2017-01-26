@@ -77,6 +77,9 @@
 #if IN_IOTLAB_PAR
 #pragma message "deployment.c: compiling with flag IN_IOTLAB Paris"
 #endif
+#if IN_FLOCKLAB
+#pragma message "deployment.c: compiling with flag IN_FLOCKLAB"
+#endif
 
 #if RPL_CONFIG == CONFIG_STORING
 #pragma message "deployment.c: compiling with RPL storing mode"
@@ -1030,6 +1033,17 @@ static const struct id_mac id_mac_list[] = {
     {256, {{0x02,0x00,0x00,0x00,0x00,0x00,0x25,0x54}}},
     {258, {{0x02,0x00,0x00,0x00,0x00,0x00,0xa9,0x71}}},
 
+#elif IN_FLOCKLAB
+
+    {  3, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x29}}},
+    {  6, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x34}}},
+    {  8, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x1f}}},
+    { 15, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x85}}},
+    { 16, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x00}}},
+    { 18, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x37}}},
+    { 22, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x08}}},
+    { 23, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0x5f}}},
+    { 31, {{0x00,0x12,0x4b,0x00,0x06,0x0d,0x9b,0xb1}}},
 
 #endif
   { 0, { { 0 } } }
@@ -1075,16 +1089,17 @@ get_random_node_id()
 /* Returns the node's node-id */
 uint16_t
 get_node_id()
-{
-#if CONTIKI_TARGET_IOTLAB_M3
-  return node_id_from_linkaddr((const linkaddr_t *)&linkaddr_node_addr);
-#elif CONTIKI_TARGET_Z1 || CONTIKI_TARGET_JN516X
+{ 
+#if CONTIKI_TARGET_Z1 || CONTIKI_TARGET_JN516X
   extern unsigned char node_mac[8];
   return node_id_from_linkaddr((const linkaddr_t *)node_mac);
-#else
+#elif CONTIKI_TARGET_SKY
   extern unsigned char ds2411_id[8];
   return node_id_from_linkaddr((const linkaddr_t *)&ds2411_id);
+#else
+  return node_id_from_linkaddr((const linkaddr_t *)&linkaddr_node_addr);
 #endif
+
 }
 /* Build a global link-layer address from an IPv6 based on its UUID64 */
 static void
