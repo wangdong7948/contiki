@@ -101,7 +101,7 @@ alt
   #elif IN_NESTESTBED
     #define TARGET_NODES (MAX_NODES-5)
   #else
-    #define TARGET_NODES (MAX_NODES-1)
+    #define TARGET_NODES (MAX_NODES-2)
   #endif
 #else
   #define TARGET_NODES (NNODES-5)
@@ -174,8 +174,12 @@ print_network_status(void)
       rpl_ns_get_node_global_addr(&parent_ipaddr, link->parent);
       PRINTF("NetStatus: ");
       PRINT6ADDR(&child_ipaddr);
-      PRINTF(" to ");
-      PRINT6ADDR(&parent_ipaddr);
+      if(link->parent == NULL) {
+        PRINTF(" --- DODAG root ");
+      } else {
+        PRINTF(" to ");
+        PRINT6ADDR(&parent_ipaddr);
+      }
       PRINTF(" (lifetime: %lu seconds)\n", (unsigned long)link->lifetime);
     }
     link = rpl_ns_node_next(link);

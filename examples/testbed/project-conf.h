@@ -68,6 +68,13 @@
 #define RF2XX_SOFT_PREPARE 0
 #undef RF2XX_WITH_TSCH
 #define RF2XX_WITH_TSCH 1
+
+/* Needed for CC2538 platforms only */
+/* For TSCH we have to use the more accurate crystal oscillator
+ * by default the RC oscillator is activated */
+#undef SYS_CTRL_CONF_OSC32K_USE_XTAL
+#define SYS_CTRL_CONF_OSC32K_USE_XTAL 1
+
 /* Needed for cc2420 platforms only */
 /* Disable DCO calibration (uses timerB) */
 #undef DCOSYNCH_CONF_ENABLED
@@ -79,7 +86,7 @@
 /* TSCH logging. 0: disabled. 1: basic log. 2: with delayed
  * log messages from interrupt */
 #undef TSCH_LOG_CONF_LEVEL
-#define TSCH_LOG_CONF_LEVEL 2
+#define TSCH_LOG_CONF_LEVEL 1
 
 /* Don't log broadcast Rx */
 #undef TSCH_LOG_CONF_ALL_RX
@@ -240,11 +247,23 @@
 #undef RPL_CONF_DIO_REDUNDANCY
 #define RPL_CONF_DIO_REDUNDANCY 0xff
 
+#if IN_FLOCKLAB /* faster joining */
+
+#undef RPL_CONF_DIO_INTERVAL_MIN
+#define RPL_CONF_DIO_INTERVAL_MIN 12
+
+#undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
+#define RPL_CONF_DIO_INTERVAL_DOUBLINGS 8
+
+#else
+
 #undef RPL_CONF_DIO_INTERVAL_MIN
 #define RPL_CONF_DIO_INTERVAL_MIN 14 /* 2^14 ms = 16.384 s */
 
 #undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
 #define RPL_CONF_DIO_INTERVAL_DOUBLINGS 6 /* 2^(14+6) ms = 1048.576 s */
+
+#endif
 
 #ifdef SMALL_SCALE /* More probing for quicker convergence in gre-56 */
 #undef RPL_CONF_PROBING_INTERVAL
@@ -336,6 +355,15 @@
 
 #undef RF2XX_TX_POWER
 #define RF2XX_TX_POWER PHY_POWER_m30dBm
+
+#elif DEPLOYMENT <= DEPLOYMENT_FLOCKLAB
+
+#undef NBR_TABLE_CONF_MAX_NEIGHBORS
+#define NBR_TABLE_CONF_MAX_NEIGHBORS MAX_NODES
+
+/* The network is so sparse we make sure our association is stable before sending any DAO */
+#undef RPL_CONF_DAO_DELAY
+#define RPL_CONF_DAO_DELAY (90 * CLOCK_SECOND)
 
 #endif
 
