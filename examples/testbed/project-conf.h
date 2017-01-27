@@ -41,6 +41,11 @@
 
 #if CONFIG == CONFIG_TSCH
 
+#if defined NNODES || IN_FLOCKLAB == 1
+#define SMALL_SCALE 1
+#endif
+
+
 #undef WITH_TSCH
 #define WITH_TSCH 1
 
@@ -50,7 +55,7 @@
 #define TSCH_CALLBACK_JOINING_NETWORK tsch_rpl_callback_joining_network
 #define TSCH_CALLBACK_LEAVING_NETWORK tsch_rpl_callback_leaving_network
 
-#ifdef NNODES
+#ifdef SMALL_SCALE
 #define TSCH_WITH_AGGRESSIVE_STARTUP (4 * 60 * CLOCK_SECOND)
 #define TSCH_WITH_AGGRESSIVE_EB_PERIOD (1 * CLOCK_SECOND)
 #endif
@@ -74,7 +79,7 @@
 /* TSCH logging. 0: disabled. 1: basic log. 2: with delayed
  * log messages from interrupt */
 #undef TSCH_LOG_CONF_LEVEL
-#define TSCH_LOG_CONF_LEVEL 1
+#define TSCH_LOG_CONF_LEVEL 2
 
 /* Don't log broadcast Rx */
 #undef TSCH_LOG_CONF_ALL_RX
@@ -241,7 +246,7 @@
 #undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
 #define RPL_CONF_DIO_INTERVAL_DOUBLINGS 6 /* 2^(14+6) ms = 1048.576 s */
 
-#ifdef NNODES /* More probing for quicker convergence in gre-56 */
+#ifdef SMALL_SCALE /* More probing for quicker convergence in gre-56 */
 #undef RPL_CONF_PROBING_INTERVAL
 #define RPL_CONF_PROBING_INTERVAL (30 * CLOCK_SECOND)
 #else
