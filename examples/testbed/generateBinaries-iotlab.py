@@ -34,9 +34,9 @@ configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'probing': 1, 'rss
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx': 16}) #10+4
 configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 2, 'channels': 4, 'rtx': 32}) #14 | 2 * 25
 
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx':  8}) #11+3 | 2 * 6
+#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx':  8}) #11+3 | 2 * 5
 #configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 16}) #11+3
-#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 32}) #14 | 2 * 7
+#configList.append({'app': 'app-rpl-ping-pong', 'rpl_mode': 1, 'squaredetx': 0, 'channels': 4, 'rtx': 32}) #14 | 2 * 6
 
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 0, 'channels': 16, 'rtx': 8})
 #configList.append({'app': 'app-rpl-any-to-any', 'rpl_mode': 2, 'squaredetx': 1, 'channels': 16, 'rtx': 8})

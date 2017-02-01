@@ -119,7 +119,7 @@ struct ringbufindex input_ringbuf;
 struct input_packet input_array[TSCH_MAX_INCOMING_PACKETS];
 
 /* Last time we received Sync-IE (ACK or data packet from a time source) */
-static struct asn_t last_sync_asn;
+struct asn_t last_sync_asn;
 
 /* A global lock for manipulating data structures safely from outside of interrupt */
 static volatile int tsch_locked = 0;

@@ -48,7 +48,7 @@
 
 /* Estimated drift of the time-source neighbor. Can be negative.
  * Units used: ppm multiplied by 256. */
-static int32_t drift_ppm;
+int32_t drift_ppm;
 /* Ticks compensated locally since the last timesync time */
 static int32_t compensated_ticks;
 /* Number of already recorded timesync history entries */

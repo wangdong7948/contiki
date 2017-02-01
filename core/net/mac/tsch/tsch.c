@@ -798,7 +798,11 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
             PRINTF("TSCH:! could not enqueue EB packet\n");
           } else {
 #if !MIN_LOG
-            PRINTF("TSCH: enqueue EB packet %u %u\n", eb_len, hdr_len);
+            extern int32_t drift_ppm;
+            extern struct asn_t last_sync_asn;
+            PRINTF("TSCH: enqueue EB packet %u %u, last sync %ld, drift %ld ppm\n", eb_len, hdr_len,
+              ASN_DIFF(current_asn, last_sync_asn),
+              drift_ppm / 256);
 #endif
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
