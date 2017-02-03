@@ -250,23 +250,11 @@
 #undef RPL_CONF_DIO_REDUNDANCY
 #define RPL_CONF_DIO_REDUNDANCY 0xff
 
-#if IN_FLOCKLAB /* faster joining */
-
-#undef RPL_CONF_DIO_INTERVAL_MIN
-#define RPL_CONF_DIO_INTERVAL_MIN 12
-
-#undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
-#define RPL_CONF_DIO_INTERVAL_DOUBLINGS 8
-
-#else
-
 #undef RPL_CONF_DIO_INTERVAL_MIN
 #define RPL_CONF_DIO_INTERVAL_MIN 14 /* 2^14 ms = 16.384 s */
 
 #undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
 #define RPL_CONF_DIO_INTERVAL_DOUBLINGS 6 /* 2^(14+6) ms = 1048.576 s */
-
-#endif
 
 #ifdef SMALL_SCALE /* More probing for quicker convergence in gre-56 */
 #undef RPL_CONF_PROBING_INTERVAL
@@ -359,14 +347,38 @@
 #undef RF2XX_TX_POWER
 #define RF2XX_TX_POWER PHY_POWER_m30dBm
 
-#elif DEPLOYMENT <= DEPLOYMENT_FLOCKLAB
+#elif DEPLOYMENT == DEPLOYMENT_FLOCKLAB
+
+#undef RPL_CONF_MAX_RANKINC
+#define RPL_CONF_MAX_RANKINC 4096
+
+#undef RPL_CONF_DIO_INTERVAL_MIN
+#define RPL_CONF_DIO_INTERVAL_MIN 12
+
+#undef RPL_CONF_DIO_INTERVAL_DOUBLINGS
+#define RPL_CONF_DIO_INTERVAL_DOUBLINGS 8
+
+#undef TSCH_WITH_AGGRESSIVE_STARTUP
+#define TSCH_WITH_AGGRESSIVE_STARTUP (2 * 60 * CLOCK_SECOND)
+
+#undef TSCH_WITH_AGGRESSIVE_EB_PERIOD
+#define TSCH_WITH_AGGRESSIVE_EB_PERIOD (1 * CLOCK_SECOND)
+
+#undef TSCH_CONF_EB_PERIOD
+#define TSCH_CONF_EB_PERIOD (10 * CLOCK_SECOND)
+
+#undef TSCH_CONF_MAX_EB_PERIOD
+#define TSCH_CONF_MAX_EB_PERIOD (30 * CLOCK_SECOND)
+
+#undef TSCH_CONF_MAC_MAX_BE
+#define TSCH_CONF_MAC_MAX_BE 5 /* Such a small network that much traffic goes to the same 
+direct child of the root, which gets congested easilly. */
+
+#undef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM 16
 
 #undef NBR_TABLE_CONF_MAX_NEIGHBORS
 #define NBR_TABLE_CONF_MAX_NEIGHBORS MAX_NODES
-
-/* The network is so sparse we make sure our association is stable before sending any DAO */
-#undef RPL_CONF_DAO_DELAY
-#define RPL_CONF_DAO_DELAY (90 * CLOCK_SECOND)
 
 #endif
 
