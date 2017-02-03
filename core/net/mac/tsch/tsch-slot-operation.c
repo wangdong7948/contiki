@@ -492,7 +492,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               int ack_len;
               rtimer_clock_t ack_start_time;
               int is_time_source;
+#if TSCH_HW_FRAME_FILTERING
               radio_value_t radio_rx_mode;
+#endif
               struct ieee802154_ies ack_ies;
               uint8_t ack_hdrlen;
               frame802154_t frame;

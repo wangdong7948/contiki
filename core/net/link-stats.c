@@ -45,7 +45,9 @@
 #endif
 
 /* Half time for the freshness counter, in minutes */
+#ifndef FRESHNESS_HALF_LIFE
 #define FRESHNESS_HALF_LIFE             20
+#endif
 /* Statistics are fresh if the freshness counter is FRESHNESS_TARGET or more */
 #define FRESHNESS_TARGET                 4
 /* Maximum value for the freshness counter */
