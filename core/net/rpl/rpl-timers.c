@@ -456,6 +456,82 @@ get_probing_target(rpl_dag_t *dag)
   return probing_target;
 }
 /*---------------------------------------------------------------------------*/
+rpl_parent_t *
+get_probing_target_force_parent(rpl_dag_t *dag)
+{
+  /* Returns the next probing target. The current implementation probes the urgent
+   * probing target if any, or the preferred parent if its link statistics need refresh.
+   * Otherwise, it picks at random between:
+   * (1) selecting the best parent
+   * (2) selecting the best parent with non-fresh link statistics
+   * (3) selecting the least recently updated parent
+   */
+
+  rpl_parent_t *p;
+  rpl_parent_t *probing_target = NULL;
+  rpl_rank_t probing_target_rank = INFINITE_RANK;
+  clock_time_t probing_target_age = 0;
+  clock_time_t clock_now = clock_time();
+  unsigned short r;
+
+  if(dag == NULL ||
+      dag->instance == NULL) {
+    return NULL;
+  }
+
+  /* There is an urgent probing target */
+  if(dag->instance->urgent_probing_target != NULL) {
+    return dag->instance->urgent_probing_target;
+  }
+
+  /* The preferred parent needs probing */
+  if(dag->preferred_parent != NULL && !rpl_parent_is_fresh(dag->preferred_parent)) {
+    return dag->preferred_parent;
+  }
+
+  r = random_rand();
+
+  /* With 1/3 probability: probe best parent */
+  if(r % 3 == 0) {
+    return dag->preferred_parent;
+  }
+
+  /* With 1/3 probability: probe best non-fresh parent */
+  if(r % 3 == 1) {
+    p = nbr_table_head(rpl_parents);
+    while(p != NULL) {
+      if(p->dag == dag && !rpl_parent_is_fresh(p)) {
+        /* p is in our dag and needs probing */
+        rpl_rank_t p_rank = rpl_rank_via_parent(p);
+        if(probing_target == NULL
+            || p_rank < probing_target_rank) {
+          probing_target = p;
+          probing_target_rank = p_rank;
+        }
+      }
+      p = nbr_table_next(rpl_parents, p);
+    }
+  }
+
+  /* If we still do not have a probing target: pick the least recently updated parent */
+  if(probing_target == NULL) {
+    p = nbr_table_head(rpl_parents);
+    while(p != NULL) {
+      const struct link_stats *stats =rpl_get_parent_link_stats(p);
+      if(p->dag == dag && stats != NULL) {
+        if(probing_target == NULL
+            || clock_now - stats->last_tx_time > probing_target_age) {
+          probing_target = p;
+          probing_target_age = clock_now - stats->last_tx_time;
+        }
+      }
+      p = nbr_table_next(rpl_parents, p);
+    }
+  }
+
+  return probing_target;
+}
+/*---------------------------------------------------------------------------*/
 static void
 handle_probing_timer(void *ptr)
 {

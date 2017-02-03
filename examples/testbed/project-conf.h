@@ -380,6 +380,12 @@ direct child of the root, which gets congested easilly. */
 #undef NBR_TABLE_CONF_MAX_NEIGHBORS
 #define NBR_TABLE_CONF_MAX_NEIGHBORS MAX_NODES
 
+#undef RPL_CONF_PROBING_SELECT_FUNC
+#define RPL_CONF_PROBING_SELECT_FUNC get_probing_target_force_parent
+
+#undef FRESHNESS_HALF_LIFE
+#define FRESHNESS_HALF_LIFE 5
+
 #endif
 
 #if WITH_ORCHESTRA
