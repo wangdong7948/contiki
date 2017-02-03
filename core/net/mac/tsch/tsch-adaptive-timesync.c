@@ -44,11 +44,12 @@
 #include "tsch-log.h"
 #include <stdio.h>
 
-#if TSCH_ADAPTIVE_TIMESYNC
-
 /* Estimated drift of the time-source neighbor. Can be negative.
  * Units used: ppm multiplied by 256. */
 int32_t drift_ppm;
+
+#if TSCH_ADAPTIVE_TIMESYNC
+
 /* Ticks compensated locally since the last timesync time */
 static int32_t compensated_ticks;
 /* Number of already recorded timesync history entries */

@@ -294,13 +294,6 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
       PT_YIELD(pt); \
     } \
     now = RTIMER_NOW(); \
-    if(RTIMER_CLOCK_DIFF(now, (ref_time) + (offset)) > 0) { \
-      TSCH_LOG_ADD(tsch_log_message, \
-                    snprintf(log->message, sizeof(log->message), \
-                        "!sc-miss %s %d %d", \
-                            str, (int)(now-(ref_time)), (int)(offset)); \
-          ); \
-    } \
     BUSYWAIT_UNTIL_ABS(0, ref_time, offset); \
   } while(0);
 /*---------------------------------------------------------------------------*/
@@ -821,7 +814,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             ringbufindex_put(&input_ringbuf);
 
             /* Log every reception */
-            if(TSCH_LOG_ALL_RX || frame.fcf.ack_required) { /* Log unicast only */
+            if(TSCH_LOG_ALL_RX || frame.fcf.ack_required || is_drift_correction_used) { /* Log unicast only */
               TSCH_LOG_ADD(tsch_log_rx,
                 log->rx.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
                 log->rx.is_unicast = frame.fcf.ack_required;

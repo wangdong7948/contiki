@@ -75,6 +75,9 @@
 #undef SYS_CTRL_CONF_OSC32K_USE_XTAL
 #define SYS_CTRL_CONF_OSC32K_USE_XTAL 1
 
+#undef TSCH_CONF_HW_FRAME_FILTERING
+#define TSCH_CONF_HW_FRAME_FILTERING	0
+
 /* Needed for cc2420 platforms only */
 /* Disable DCO calibration (uses timerB) */
 #undef DCOSYNCH_CONF_ENABLED
