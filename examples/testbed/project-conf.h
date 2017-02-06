@@ -97,7 +97,7 @@
 
 /* IEEE802.15.4 PANID */
 #undef IEEE802154_CONF_PANID
-#define IEEE802154_CONF_PANID 0xbe43
+#define IEEE802154_CONF_PANID 0xbe78
 
 #undef TSCH_CONF_JOIN_MY_PANID_ONLY
 #define TSCH_CONF_JOIN_MY_PANID_ONLY 1
@@ -385,6 +385,17 @@ direct child of the root, which gets congested easilly. */
 
 #undef FRESHNESS_HALF_LIFE
 #define FRESHNESS_HALF_LIFE 5
+
+/* Enable security to rule out ongoing traffic from flocklab
+(likely some glossy repeating our packets, i.e., including our PANID) */
+#undef LLSEC802154_CONF_ENABLED
+#define LLSEC802154_CONF_ENABLED 1
+/* TSCH uses explicit keys to identify k1 and k2 */
+#undef LLSEC802154_CONF_USES_EXPLICIT_KEYS
+#define LLSEC802154_CONF_USES_EXPLICIT_KEYS 1
+/* TSCH uses the ASN rather than frame counter to construct the Nonce */
+#undef LLSEC802154_CONF_USES_FRAME_COUNTER
+#define LLSEC802154_CONF_USES_FRAME_COUNTER 0
 
 #endif
 

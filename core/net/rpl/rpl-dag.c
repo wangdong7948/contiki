@@ -918,10 +918,10 @@ rpl_select_parent(rpl_dag_t *dag)
       rpl_parent_t *best_fresh = best_parent(dag, 1);
       if(best_fresh == NULL) {
         /* No fresh parent around, use best (non-fresh) */
-        rpl_set_preferred_parent(dag, best, "select best non-fresh");
+        rpl_set_preferred_parent(dag, best, "select best (non-fresh)");
       } else {
         /* Use best fresh */
-        rpl_set_preferred_parent(dag, best_fresh, "selectbest  fresh");
+        rpl_set_preferred_parent(dag, best_fresh, "select best fresh");
       }
 #if RPL_WITH_PROBING
       /* Probe the best parent shortly in order to get a fresh estimate */

@@ -800,14 +800,20 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             /* If the sender is a time source, proceed to clock drift compensation */
             n = tsch_queue_get_nbr(&source_address);
             if(n != NULL && n->is_time_source) {
-              int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
-              /* Keep track of last sync time */
-              last_sync_asn = current_asn;
-              /* Save estimated drift */
-              drift_correction = -estimated_drift;
-              is_drift_correction_used = 1;
-              tsch_timesync_update(n, since_last_timesync, -estimated_drift);
-              tsch_schedule_keepalive();
+              if(frame.fcf.ack_required && frame.fcf.frame_type != FRAME802154_DATAFRAME) {
+                TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                    "!received uc-0, did not sync %d", (int)estimated_drift));
+              } else {
+                int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
+                /* Keep track of last sync time */
+                last_sync_asn = current_asn;
+                /* Save estimated drift */
+                drift_correction = -estimated_drift;
+                is_drift_correction_used = 1;
+                tsch_timesync_update(n, since_last_timesync, -estimated_drift);
+                tsch_schedule_keepalive();
+              }
             }
 
             /* Add current input to ringbuf */
