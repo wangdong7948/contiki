@@ -102,7 +102,7 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
       printf("Address [%u %u]\n", linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
       //if(linkaddr_node_addr.u8[0] == 182 && linkaddr_node_addr.u8[1] == 20) { // NODE 1
       //if(linkaddr_node_addr.u8[0] == 178 && linkaddr_node_addr.u8[1] == 3) { // NODE 12
-      if(linkaddr_node_addr.u8[0] == 182 && linkaddr_node_addr.u8[1] == 13) { // NODE 13
+      //if(linkaddr_node_addr.u8[0] == 182 && linkaddr_node_addr.u8[1] == 13) { // NODE 13
       //if(linkaddr_node_addr.u8[0] == 181 && linkaddr_node_addr.u8[1] == 102) { // NODE 14
       //if(linkaddr_node_addr.u8[0] == 181 && linkaddr_node_addr.u8[1] == 138) { // NODE 15
       //if(linkaddr_node_addr.u8[0] == 180 && linkaddr_node_addr.u8[1] == 73) { // NODE 16
@@ -111,6 +111,8 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
       //if(linkaddr_node_addr.u8[0] == 181 && linkaddr_node_addr.u8[1] == 252) { // NODE 19
       //if(linkaddr_node_addr.u8[0] == 177 && linkaddr_node_addr.u8[1] == 168) { // NODE 20
       //if(linkaddr_node_addr.u8[0] == 177 && linkaddr_node_addr.u8[1] == 106) { // NODE 21
+      if(linkaddr_node_addr.u8[0] == 177 && linkaddr_node_addr.u8[1] == 184) { // NODE 25
+      //if(linkaddr_node_addr.u8[0] == 182 && linkaddr_node_addr.u8[1] == 0) { // NODE 24
       //if(linkaddr_node_addr.u8[1] == 0xcc) {
         printf("Broadcast --> %u\n", (unsigned)counter);
         leds_toggle(LEDS_RED);

@@ -8,6 +8,6 @@ BOARD ?= firefly
 
 CFLAGS += -DCUSTOM_CHANNEL=$(CHANNEL)
 
-CONTIKI = ../../../..
+CONTIKI = ../../..
 CONTIKI_WITH_RIME = 1
 include $(CONTIKI)/Makefile.include
