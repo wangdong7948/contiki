@@ -420,10 +420,16 @@ direct child of the root, which gets congested easilly. */
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
-#define ORCHESTRA_CONF_UNICAST_PERIOD 17
+#define ORCHESTRA_CONF_UNICAST_PERIOD 29
 
 #undef ORCHESTRA_CONF_LINKADDR_HASH
 #define ORCHESTRA_CONF_LINKADDR_HASH(addr)             (node_id_from_linkaddr(addr) * 61)
+
+#undef TSCH_CONF_ADAPTIVE_TIMESYNC
+#define TSCH_CONF_ADAPTIVE_TIMESYNC 1
+
+//#undef TSCH_CONF_RX_WAIT
+//#define TSCH_CONF_RX_WAIT 800
 
 #endif
 
