@@ -413,14 +413,20 @@ direct child of the root, which gets congested easilly. */
 #undef ORCHESTRA_CONF_RULES
 #define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
 
+#undef TSCH_CONF_MAX_EB_PERIOD
+#define TSCH_CONF_MAX_EB_PERIOD (30 * CLOCK_SECOND) /* We rely more on EBs, as they interfere with nothing else */
+
 #undef ORCHESTRA_CONF_EBSF_PERIOD
 #define ORCHESTRA_CONF_EBSF_PERIOD 383
 
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 101
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
-#define ORCHESTRA_CONF_UNICAST_PERIOD 29
+#define ORCHESTRA_CONF_UNICAST_PERIOD ORCHESTRA_PERIOD
+
+#undef TSCH_SCHEDULE_CONF_MAX_LINKS
+#define TSCH_SCHEDULE_CONF_MAX_LINKS (ORCHESTRA_PERIOD+6)
 
 #undef ORCHESTRA_CONF_LINKADDR_HASH
 #define ORCHESTRA_CONF_LINKADDR_HASH(addr)             (node_id_from_linkaddr(addr) * 61)
@@ -428,8 +434,8 @@ direct child of the root, which gets congested easilly. */
 #undef TSCH_CONF_ADAPTIVE_TIMESYNC
 #define TSCH_CONF_ADAPTIVE_TIMESYNC 1
 
-//#undef TSCH_CONF_RX_WAIT
-//#define TSCH_CONF_RX_WAIT 800
+#undef TSCH_CONF_RX_WAIT
+#define TSCH_CONF_RX_WAIT 600
 
 #endif
 

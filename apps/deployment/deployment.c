@@ -109,6 +109,22 @@
 #pragma message "deployment.c: compiling with loop fixing"
 #endif
 
+#if ORCHESTRA_PERIOD == 7
+#pragma message "deployment.c: compiling Orchestra period 7"
+#endif
+#if ORCHESTRA_PERIOD == 17
+#pragma message "deployment.c: compiling Orchestra period 17"
+#endif
+#if ORCHESTRA_PERIOD == 29
+#pragma message "deployment.c: compiling Orchestra period 29"
+#endif
+#if ORCHESTRA_PERIOD == 37
+#pragma message "deployment.c: compiling Orchestra period 37"
+#endif
+#if ORCHESTRA_PERIOD == 47
+#pragma message "deployment.c: compiling Orchestra period 47"
+#endif
+
 #if TSCH_CONF_NCHANNELS == 4
 #pragma message "TSCH_CONF_NCHANNELS == 4"
 #endif
