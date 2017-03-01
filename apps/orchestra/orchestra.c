@@ -112,11 +112,12 @@ orchestra_callback_packet_ready(void)
   /* By default, use any slotframe, any timeslot */
   uint16_t slotframe = 9;
   uint16_t timeslot = 0xffff;
+  uint16_t choffset = 0xffff;
 
   /* Loop over all rules until finding one able to handle the packet */
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->select_packet != NULL) {
-      if(all_rules[i]->select_packet(&slotframe, &timeslot)) {
+      if(all_rules[i]->select_packet(&slotframe, &timeslot, &choffset)) {
         break;
       }
     }
@@ -125,6 +126,7 @@ orchestra_callback_packet_ready(void)
 #if TSCH_WITH_LINK_SELECTOR
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_SLOTFRAME, slotframe);
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
+  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHOFFSET, choffset);
 #endif
 }
 /*---------------------------------------------------------------------------*/

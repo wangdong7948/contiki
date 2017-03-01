@@ -142,7 +142,8 @@ static rtimer_clock_t volatile current_slot_start;
 static volatile int tsch_in_slot_operation = 0;
 
 /* If we are inside a slot, this tells the current channel */
-static uint8_t current_channel;
+uint8_t current_channel;
+uint16_t current_choffset;
 
 /* Info about the link, packet and neighbor of
  * the current (or next) slot */
@@ -900,7 +901,16 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
       /* Hop channel */
-      current_channel = tsch_calculate_channel(&current_asn, current_link->channel_offset);
+      current_choffset = current_link->channel_offset;
+      if(current_choffset == 16) {
+        if(current_packet != NULL) { /* Dynamic channel offset */
+          current_choffset = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_TSCH_CHOFFSET);
+        } else {
+          current_choffset = 0; /* Default. Unused, as we have dynamic choffset only on Tx-only linkas*/
+        }
+      }
+      current_channel = tsch_calculate_channel(&current_asn, current_choffset);
+
       NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);
       /* Reset drift correction */
       drift_correction = 0;

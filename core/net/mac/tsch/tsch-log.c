@@ -95,8 +95,8 @@ tsch_log_process_pending(void)
 
     printf("TSCH: {asn-%x.%lx link-%u-%u-%u-%u ch-%u} ",
         log->asn.ms1b, log->asn.ls4b,
-        log->link->slotframe_handle, sf ? sf->size.val : 0, log->link->timeslot, log->link->channel_offset,
-        tsch_calculate_channel(&log->asn, log->link->channel_offset));
+        log->link->slotframe_handle, sf ? sf->size.val : 0, log->link->timeslot, log->choffset/*log->link->channel_offset*/,
+        log->channel);
     switch(log->type) {
       case tsch_log_tx:
         printf("%s-%u-%u %u tx %d, st %d-%d",
@@ -150,6 +150,8 @@ tsch_log_prepare_add(void)
     struct tsch_log_t *log = &log_array[log_index];
     log->asn = current_asn;
     log->link = current_link;
+    log->channel = current_channel;
+    log->choffset = current_choffset;
     return log;
   } else {
     log_dropped++;

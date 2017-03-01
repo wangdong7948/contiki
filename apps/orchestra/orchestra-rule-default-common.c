@@ -51,7 +51,7 @@ static uint16_t channel_offset = 0;
 
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *choffset)
 {
   /* We are the default slotframe, select anything */
   if(slotframe != NULL) {
@@ -59,6 +59,9 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
   }
   if(timeslot != NULL) {
     *timeslot = 0;
+  }
+  if(choffset != NULL) {
+    *choffset = channel_offset;
   }
   return 1;
 }

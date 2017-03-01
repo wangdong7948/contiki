@@ -89,6 +89,8 @@ struct tsch_log_t {
   } type;
   struct asn_t asn;
   struct tsch_link *link;
+  uint16_t channel;
+  uint16_t choffset;
   union {
     char message[48];
     struct {

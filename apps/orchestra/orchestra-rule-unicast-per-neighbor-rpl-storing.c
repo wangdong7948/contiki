@@ -141,7 +141,7 @@ child_removed(const linkaddr_t *linkaddr)
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *choffset)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
@@ -152,6 +152,9 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
     }
     if(timeslot != NULL) {
       *timeslot = ORCHESTRA_UNICAST_SENDER_BASED ? get_node_timeslot(&linkaddr_node_addr) : get_node_timeslot(dest);
+    }
+    if(choffset != NULL) {
+      *choffset = channel_offset;
     }
     return 1;
   }

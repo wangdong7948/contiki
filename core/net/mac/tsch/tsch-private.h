@@ -79,6 +79,8 @@ extern const linkaddr_t tsch_eb_address;
 extern struct asn_t current_asn;
 extern uint8_t tsch_join_priority;
 extern struct tsch_link *current_link;
+extern uint8_t current_channel;
+extern uint16_t current_choffset;
 /* TSCH channel hopping sequence */
 extern uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 extern struct asn_divisor_t tsch_hopping_sequence_length;
