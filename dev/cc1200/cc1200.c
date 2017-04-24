@@ -648,11 +648,11 @@ pollhandler(void)
     len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
     if(len > 0) {
-      static uint32_t counter;
+      //static uint32_t counter;
       packetbuf_set_datalen(len);
-      memcpy(&counter, packetbuf_dataptr(), sizeof(counter));
-      printf("cc1200: Received %u %u, %d dBm\n",
-            packetbuf_datalen(), (unsigned) counter, (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+      //memcpy(&counter, packetbuf_dataptr(), sizeof(counter));
+      //printf("cc1200: Received %u %u, %d dBm\n",
+        //    packetbuf_datalen(), (unsigned) counter, (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
       NETSTACK_RDC.input();
     }
 

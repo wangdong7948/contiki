@@ -5,6 +5,7 @@ all: $(CONTIKI_PROJECT)
 
 TARGET ?= zoul
 BOARD ?= firefly
+APPS = deployment
 
 CFLAGS += -DCUSTOM_CHANNEL=$(CHANNEL)
 

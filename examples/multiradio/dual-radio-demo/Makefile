@@ -3,6 +3,9 @@ CONTIKI_PROJECT = dual-radio-demo
 
 all: $(CONTIKI_PROJECT)
 
-CONTIKI = ../../../..
+TARGET ?= zoul
+BOARD ?= firefly
+
+CONTIKI = ../../..
 CONTIKI_WITH_RIME = 1
 include $(CONTIKI)/Makefile.include
