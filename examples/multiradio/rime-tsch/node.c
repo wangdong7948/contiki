@@ -45,36 +45,36 @@
 #include "net/mac/tsch/tsch.h"
 #include "net/mac/tsch/tsch-schedule.h"
 #include "dev/multiradio.h"
+#include "apps/deployment/deployment.h"
 
-const linkaddr_t coordinator_addr =    { { 0x0f, 0xcc } };
-const linkaddr_t destination_addr =    { { 0x0f, 0xcc } };
-
-/*---------------------------------------------------------------------------*/
-PROCESS(unicast_test_process, "Rime Node");
-AUTOSTART_PROCESSES(&unicast_test_process);
+static uint32_t counter;
+static const int coordinator_id = 1;
+#define BROADCAST_CHANNEL 129
 
 /*---------------------------------------------------------------------------*/
-static void
-recv_uc(struct unicast_conn *c, const linkaddr_t *from)
-{
-  //printf("App: unicast message received from %u.%u\n", from->u8[0], from->u8[1]);
-}
+PROCESS(test_process, "Rime Node");
+AUTOSTART_PROCESSES(&test_process);
+
 /*---------------------------------------------------------------------------*/
 static void
-sent_uc(struct unicast_conn *ptr, int status, int num_tx)
+broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
-  //printf("App: unicast message sent, status %u, num_tx %u\n", status, num_tx);
+  printf("App: received from %u seq %u rssi %d\n",
+         node_id_from_linkaddr(from),
+         (unsigned)*(uint32_t *)packetbuf_dataptr(),
+         (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)
+        );
 }
-
-static const struct unicast_callbacks unicast_callbacks = { recv_uc, sent_uc };
-static struct unicast_conn uc;
+static const struct broadcast_callbacks bc_rx = { broadcast_recv };
+static struct broadcast_conn bc;
 
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(unicast_test_process, ev, data)
+PROCESS_THREAD(test_process, ev, data)
 {
   PROCESS_BEGIN();
 
-  tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
+  node_id = get_node_id();
+  tsch_set_coordinator(node_id == coordinator_id);
 
 #if WITH_MULTIRADIO
   multiradio_select(&cc1200_driver);
@@ -83,11 +83,11 @@ PROCESS_THREAD(unicast_test_process, ev, data)
   NETSTACK_RADIO.off();
 
   struct tsch_slotframe *sf_cc1200;
-  sf_cc1200 = tsch_schedule_add_slotframe(0, 101);
+  sf_cc1200 = tsch_schedule_add_slotframe(0, 7);
   sf_cc1200->radio = &cc1200_driver;
   
   struct tsch_slotframe *sf_cc2538;
-  sf_cc2538 = tsch_schedule_add_slotframe(1, 101);
+  sf_cc2538 = tsch_schedule_add_slotframe(1, 7);
   sf_cc2538->radio = &cc2538_rf_driver;
     
   tsch_schedule_add_link(sf_cc1200,
@@ -106,27 +106,26 @@ tsch_schedule_add_link(sf,
     LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
     0, 0);
 tsch_schedule_add_link(sf,
-    LINK_OPTION_TX | LINK_OPTION_RX,
+    LINK_OPTION_TX | LINK_OPTION_RX | LINK_OPTION_SHARED,
     LINK_TYPE_NORMAL, &tsch_broadcast_address,
     1, 0);
 #endif /* WITH_MULTIRADIO */
 
   NETSTACK_MAC.on();
+  broadcast_open(&bc, BROADCAST_CHANNEL, &bc_rx);
   
-  unicast_open(&uc, 146, &unicast_callbacks);
-
   while(1) {
     static struct etimer et;
 
     etimer_set(&et, 4*CLOCK_SECOND);
-
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    packetbuf_copyfrom("Hello", 111);
-
-    if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
-//      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
-      unicast_send(&uc, &destination_addr);
+    if(node_id == coordinator_id) {
+      printf("App: sending seq %u\n", (unsigned)counter);
+      leds_toggle(LEDS_RED);
+      packetbuf_copyfrom(&counter, sizeof(counter));
+      broadcast_send(&bc);
+      counter++;
     }
   }
 

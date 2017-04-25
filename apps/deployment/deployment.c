@@ -127,21 +127,4 @@ set_linkaddr_from_id(linkaddr_t *lladdr, uint16_t id)
     curr++;
   }
 }
-/* Initializes global IPv6 and creates DODAG */
-int
-deployment_init(uip_ipaddr_t *ipaddr, uip_ipaddr_t *br_prefix, int root_id)
-{  
-  node_id = get_node_id();
-
-  if(node_id == 0) {
-    NETSTACK_RADIO.off();
-    NETSTACK_RDC.off(0);
-    NETSTACK_MAC.off(0);
-    return 0;
-  }
-  
-  NETSTACK_MAC.on();
-
-  return 1;
-}
 

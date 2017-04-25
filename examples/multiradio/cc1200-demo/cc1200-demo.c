@@ -65,8 +65,8 @@ static uint32_t counter;
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
-  printf("App: received from %x:%x seq %u rssi %d\n",
-         from->u8[0], from->u8[1],
+  printf("App: received from %u seq %u rssi %d\n",
+         node_id_from_linkaddr(from),
          (unsigned)*(uint32_t *)packetbuf_dataptr(),
          (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)
         );

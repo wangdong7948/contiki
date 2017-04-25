@@ -41,7 +41,7 @@
 #ifndef __PROJECT_CONF_H__
 #define __PROJECT_CONF_H__
 
-#define WITH_MULTIRADIO 0
+#define WITH_MULTIRADIO 1
 
 /* Netstack layers */
 #undef NETSTACK_CONF_MAC
@@ -63,6 +63,9 @@
 #undef TSCH_LOG_CONF_LEVEL
 #define TSCH_LOG_CONF_LEVEL 2
 
+#undef TSCH_LOG_CONF_ID_FROM_LINKADDR
+#define TSCH_LOG_CONF_ID_FROM_LINKADDR node_id_from_linkaddr
+
 /* IEEE802.15.4 PANID */
 #undef IEEE802154_CONF_PANID
 #define IEEE802154_CONF_PANID 0xabcd
@@ -71,14 +74,14 @@
 #undef TSCH_CONF_AUTOSTART
 #define TSCH_CONF_AUTOSTART 0
 
-#undef TSCH_LOG_CONF_ID_FROM_LINKADDR
-#define TSCH_LOG_CONF_ID_FROM_LINKADDR(addr) ((addr) ? (addr)->u8[LINKADDR_SIZE - 2] : 0)
+/* Needed for CC2538 platforms only */
+/* For TSCH we have to use the more accurate crystal oscillator
+ * by default the RC oscillator is activated */
+#undef SYS_CTRL_CONF_OSC32K_USE_XTAL
+#define SYS_CTRL_CONF_OSC32K_USE_XTAL 1
 
-#if CONTIKI_TARGET_CC2538DK || CONTIKI_TARGET_ZOUL || \
-  CONTIKI_TARGET_OPENMOTE_CC2538
+#undef TSCH_CONF_HW_FRAME_FILTERING
 #define TSCH_CONF_HW_FRAME_FILTERING    0
-#endif /* CONTIKI_TARGET_CC2538DK || CONTIKI_TARGET_ZOUL \
-       || CONTIKI_TARGET_OPENMOTE_CC2538 */
 
 #if WITH_MULTIRADIO       
 #undef  NETSTACK_CONF_RADIO
@@ -92,6 +95,7 @@
 #define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL 0 /* No 6TiSCH minimal schedule */
 #undef  NETSTACK_CONF_RADIO
 #define NETSTACK_CONF_RADIO         cc1200_driver
+//#define NETSTACK_CONF_RADIO         cc1200_driver
 //#define CC1200_CONF_RF_CFG cc1200_868_2fsk_1_2kbps
 #define CC1200_CONF_RF_CFG cc1200_802154g_863_870_fsk_50kbps
 #define CC1200_NO_HDR_CHECK         1
