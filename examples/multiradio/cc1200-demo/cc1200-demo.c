@@ -65,10 +65,11 @@ static uint32_t counter;
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
-  printf("*** Received %u bytes from %u:%u: '0x%04u' ", packetbuf_datalen(),
-         from->u8[0], from->u8[1], (unsigned)*(uint32_t *)packetbuf_dataptr());
-  printf("%d - %u\n", (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI),
-         packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY));
+  printf("App: received from %x:%x seq %u rssi %d\n",
+         from->u8[0], from->u8[1],
+         (unsigned)*(uint32_t *)packetbuf_dataptr(),
+         (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)
+        );
   leds_toggle(LEDS_GREEN);
 }
 /*---------------------------------------------------------------------------*/
@@ -102,7 +103,7 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
     PROCESS_YIELD();
     if(ev == PROCESS_EVENT_TIMER) {
       if(node_id == 1) {
-        printf("Broadcast --> %u\n", (unsigned)counter);
+        printf("App: sending seq %u\n", (unsigned)counter);
         leds_toggle(LEDS_RED);
         packetbuf_copyfrom(&counter, sizeof(counter));
         broadcast_send(&bc);
