@@ -47,6 +47,7 @@
 #include <string.h>
 #include <stdio.h>
 
+static int8_t rssi;
 static rtimer_clock_t sfd_timestamp = 0;
 /* Are we currently in poll mode? Disabled by default */
 static uint8_t volatile poll_mode = 0;
@@ -942,7 +943,7 @@ read(void *buf, unsigned short buf_len)
 
   if(rx_pkt_len > 0) {
 
-    int8_t rssi = rx_pkt[rx_pkt_len - 2];
+    rssi = rx_pkt[rx_pkt_len - 2];
     /* CRC is already checked */
     uint8_t crc_lqi = rx_pkt[rx_pkt_len - 1];
 
@@ -1271,6 +1272,10 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)rssi0;
     }
   
+    return RADIO_RESULT_OK;
+
+  case RADIO_PARAM_LAST_RSSI:
+    *value = (radio_value_t)rssi;
     return RADIO_RESULT_OK;
   
   case RADIO_PARAM_64BIT_ADDR:

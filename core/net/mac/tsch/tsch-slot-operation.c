@@ -643,7 +643,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
 
               if(ack_len != 0) {
-                if(is_time_source) {
+                if(is_time_source && (current_link->link_options & LINK_OPTION_TIME_KEEPING)) {
                   int32_t eack_time_correction = US_TO_RTIMERTICKS(ack_ies.ie_time_correction);
                   int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
                   if(eack_time_correction > SYNC_IE_BOUND) {
@@ -884,7 +884,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
             /* If the sender is a time source, proceed to clock drift compensation */
             n = tsch_queue_get_nbr(&source_address);
-            if(n != NULL && n->is_time_source) {
+            if(n != NULL && n->is_time_source && (current_link->link_options & LINK_OPTION_TIME_KEEPING)) {
               int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
               /* Keep track of last sync time */
               last_sync_asn = current_asn;
@@ -908,6 +908,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.is_data = frame.fcf.frame_type == FRAME802154_DATAFRAME;
               log->rx.sec_level = frame.aux_hdr.security_control.security_level;
               log->rx.estimated_drift = estimated_drift;
+              log->rx.rssi = current_input->rssi;
             );
           }
 

@@ -106,10 +106,11 @@ tsch_log_process_pending(void)
         printf("\n");
         break;
       case tsch_log_rx:
-        printf("%s-%u-%u %u rx %d",
+        printf("%s-%u-%u %u rx %d rssi %d",
             log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
                 log->rx.datalen,
-                log->rx.src);
+                log->rx.src,
+                log->rx.rssi);
         if(log->rx.drift_used) {
           printf(", dr %d", log->rx.drift);
         }

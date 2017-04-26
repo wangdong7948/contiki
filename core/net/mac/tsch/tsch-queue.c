@@ -55,6 +55,7 @@
 #include "net/mac/tsch/tsch-slot-operation.h"
 #include "net/mac/tsch/tsch-log.h"
 #include <string.h>
+#include "apps/deployment/deployment.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT

@@ -43,7 +43,7 @@
  * =========
  * Table 68f: Frequency band identifier 4 (863-870 MHz)
  * Table 68g: Modulation scheme identifier 0 (Filtered FSK)
- * Table 68h: Mode #1 (50kbps)
+ * Table 68h: Mode #1 (50kbps) (see table 134)
  */
 
 /* Base frequency in kHz */

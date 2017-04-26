@@ -57,6 +57,8 @@
 #include "net/mac/mac-sequence.h"
 #include "lib/random.h"
 #include "dev/multiradio.h"
+#include "dev/watchdog.h"
+#include "apps/deployment/deployment.h"
 
 #if FRAME802154_VERSION < FRAME802154_IEEE802154E_2012
 #error TSCH: FRAME802154_VERSION must be at least FRAME802154_IEEE802154E_2012
@@ -207,6 +209,7 @@ tsch_reset(void)
   ASN_INIT(current_asn, 0, 0);
   current_link = NULL;
   /* Reset timeslot timing to defaults */
+  multiradio_select(&TSCH_CONF_SCANNING_RADIO);
   if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
     for(i = 0; i < tsch_ts_elements_count; i++) {
       tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
@@ -299,8 +302,9 @@ eb_input(struct input_packet *current_input)
       while(stat != NULL) {
         /* Is neighbor eligible as a time source? */
         if(stat->rx_count > best_neighbor_eb_count / 2) {
-          if(best_stat == NULL ||
-             stat->jp < best_stat->jp) {
+          if((stat->jp + 1) < TSCH_MAX_JOIN_PRIORITY &&
+             (best_stat == NULL ||
+             stat->jp < best_stat->jp)) {
             best_stat = stat;
           }
         }
@@ -493,6 +497,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   /* TSCH timeslot timing */
   for(i = 0; i < tsch_ts_elements_count; i++) {
     if(ies.ie_tsch_timeslot_id == 0) {
+      multiradio_select(&TSCH_CONF_SCANNING_RADIO);
       if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_TIMING, &tsch_timing, sizeof(rtimer_clock_t *)) != RADIO_RESULT_OK) {
         tsch_default_timing[i] = US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
       } else {
@@ -561,7 +566,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   }
 #endif /* TSCH_INIT_SCHEDULE_FROM_EB */
 
-  if(tsch_join_priority < TSCH_MAX_JOIN_PRIORITY) {
+  if(tsch_join_priority <= TSCH_MAX_JOIN_PRIORITY) {
     struct tsch_neighbor *n;
 
     /* Add coordinator to list of neighbors, lock the entry */
