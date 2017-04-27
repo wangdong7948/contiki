@@ -252,8 +252,16 @@ tsch_release_lock(void)
 uint8_t
 tsch_calculate_channel(struct asn_t *asn, uint8_t channel_offset)
 {
-  uint16_t index_of_0 = ASN_MOD(*asn, tsch_hopping_sequence_length);
-  uint16_t index_of_offset = (index_of_0 + channel_offset) % tsch_hopping_sequence_length.val;
+  struct asn_divisor_t radio_divisor;
+  uint16_t index_of_0;
+  uint16_t index_of_offset;
+  if(NETSTACK_RADIO.get_object(RADIO_CONST_TSCH_HOPPING_SEQUENCE_DIVISOR, &radio_divisor, sizeof(struct asn_divisor_t *)) == RADIO_RESULT_OK) {
+    index_of_0 = ASN_MOD(*asn, radio_divisor);
+    index_of_offset = (index_of_0 + channel_offset) % radio_divisor.val;
+  } else {
+    index_of_0 = ASN_MOD(*asn, tsch_hopping_sequence_length);
+    index_of_offset = (index_of_0 + channel_offset) % tsch_hopping_sequence_length.val;
+  }
   return tsch_hopping_sequence[index_of_offset];
 }
 
@@ -1110,6 +1118,6 @@ tsch_slot_operation_sync(rtimer_clock_t next_slot_start,
   current_asn = *next_slot_asn;
   last_sync_asn = current_asn;
   current_link = NULL;
-    printf("TSCH: tsch_slot_operation_sync %u %u\n", (unsigned)next_slot_start, (unsigned)RTIMER_NOW());
+  printf("TSCH: tsch_slot_operation_sync %u %u\n", (unsigned)next_slot_start, (unsigned)RTIMER_NOW());
 }
 /*---------------------------------------------------------------------------*/

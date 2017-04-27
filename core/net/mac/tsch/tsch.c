@@ -657,7 +657,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
       if(current_channel != scan_channel) {
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
         current_channel = scan_channel;
-        PRINTF("TSCH: scanning on channel %u\n", scan_channel);
+        PRINTF("TSCH: scanning on channel %u (time %u)\n", scan_channel, (unsigned)RTIMER_NOW());
       }
       current_channel_since = now_time;
     }
@@ -680,7 +680,8 @@ PT_THREAD(tsch_scan(struct pt *pt))
       NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
 
       /* Parse EB and attempt to associate */
-      PRINTF("TSCH: scan: received packet (%u bytes) on channel %u\n", input_eb.len, current_channel);
+      PRINTF("TSCH: scan: received packet (%u bytes) on channel %u, timestamp %u, time %u\n",
+        input_eb.len, current_channel, (unsigned)t0, (unsigned)RTIMER_NOW());
 
       tsch_associate(&input_eb, t0);
     }
@@ -1005,9 +1006,9 @@ packet_input(void)
     }
 
     if(!duplicate) {
-      PRINTF("TSCH: received from %u with seqno %u\n",
-             TSCH_LOG_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)),
-             packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO));
+      //PRINTF("TSCH: received from %u with seqno %u\n",
+        //     TSCH_LOG_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)),
+          //   packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO));
       NETSTACK_LLSEC.input();
     }
   }

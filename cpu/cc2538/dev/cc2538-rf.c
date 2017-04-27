@@ -52,6 +52,10 @@
 
 #include <string.h>
 /*---------------------------------------------------------------------------*/
+
+#include "net/mac/tsch/tsch-asn.h"
+static struct asn_divisor_t tsch_hopping_sequence_divisor;
+
 #define CHECKSUM_LEN 2
 
 /* uDMA channel control persistent flags */
@@ -476,6 +480,8 @@ init(void)
   if(rf_flags & RF_ON) {
     return 0;
   }
+  
+  ASN_DIVISOR_INIT(tsch_hopping_sequence_divisor, CC2538_RF_CHANNEL_MAX - CC2538_RF_CHANNEL_MIN + 1);
 
   /* Enable clock for the RF Core while Running, in Sleep and Deep Sleep */
   REG(SYS_CTRL_RCGCRFC) = 1;
@@ -979,6 +985,14 @@ get_object(radio_param_t param, void *dest, size_t size)
       return RADIO_RESULT_INVALID_VALUE;
     }
     *(rtimer_clock_t *)dest = get_sfd_timestamp();
+    return RADIO_RESULT_OK;
+  }
+  
+  if(param == RADIO_CONST_TSCH_HOPPING_SEQUENCE_DIVISOR) {
+    if(size != sizeof(struct asn_divisor_t) || !dest) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    *(struct asn_divisor_t*)dest = tsch_hopping_sequence_divisor;
     return RADIO_RESULT_OK;
   }
 

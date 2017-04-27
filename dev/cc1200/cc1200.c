@@ -47,6 +47,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "net/mac/tsch/tsch-asn.h"
+static struct asn_divisor_t tsch_hopping_sequence_divisor;
+
 static int8_t rssi;
 static rtimer_clock_t sfd_timestamp = 0;
 /* Are we currently in poll mode? Disabled by default */
@@ -674,6 +677,8 @@ init(void)
 {
 
   INFO("RF: Init (%s)\n", CC1200_RF_CFG.cfg_descriptor);
+
+  ASN_DIVISOR_INIT(tsch_hopping_sequence_divisor, CC1200_RF_CFG.max_channel - CC1200_RF_CFG.min_channel + 1);
 
   if(!(rf_flags & RF_INITIALIZED)) {
 
@@ -1448,6 +1453,14 @@ get_object(radio_param_t param, void *dest, size_t size)
       return RADIO_RESULT_INVALID_VALUE;
     }
     *(rtimer_clock_t **)dest = CC1200_RF_CFG.tsch_timing;
+    return RADIO_RESULT_OK;
+  }
+  
+  if(param == RADIO_CONST_TSCH_HOPPING_SEQUENCE_DIVISOR) {
+    if(size != sizeof(struct asn_divisor_t) || !dest) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    *(struct asn_divisor_t*)dest = tsch_hopping_sequence_divisor;
     return RADIO_RESULT_OK;
   }
   

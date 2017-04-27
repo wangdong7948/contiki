@@ -53,6 +53,7 @@
 #include "net/mac/frame802154.h"
 #include "sys/process.h"
 #include "sys/rtimer.h"
+#include "deployment.h"
 #include <string.h>
 
 #if TSCH_LOG_LEVEL >= 1
