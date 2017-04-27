@@ -149,7 +149,6 @@ PROCESS_THREAD(test_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     //printf("App: sending seq %u\n", (unsigned)counter);
-    leds_toggle(LEDS_RED);
     packetbuf_copyfrom(&counter, sizeof(counter) + 4);
     broadcast_send(&bc);
     counter++;

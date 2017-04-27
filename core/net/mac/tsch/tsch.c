@@ -58,7 +58,7 @@
 #include "lib/random.h"
 #include "dev/multiradio.h"
 #include "dev/watchdog.h"
-#include "apps/deployment/deployment.h"
+#include "deployment.h"
 
 #if FRAME802154_VERSION < FRAME802154_IEEE802154E_2012
 #error TSCH: FRAME802154_VERSION must be at least FRAME802154_IEEE802154E_2012
@@ -592,16 +592,18 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       TSCH_CALLBACK_JOINING_NETWORK();
 #endif
 
-      PRINTF("TSCH: association done, sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
+      PRINTF("TSCH: association done, sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from %u\n",
              tsch_is_pan_secured,
              frame.src_pid,
              current_asn.ms1b, current_asn.ls4b, tsch_join_priority,
              ies.ie_tsch_timeslot_id,
              ies.ie_channel_hopping_sequence_id,
              ies.ie_tsch_slotframe_and_link.slotframe_size,
-             ies.ie_tsch_slotframe_and_link.num_links);
-      PRINTLLADDR((const uip_lladdr_t *)&frame.src_addr);
-      PRINTF("\n");
+             ies.ie_tsch_slotframe_and_link.num_links,
+             node_id_from_linkaddr((const linkaddr_t *)&frame.src_addr)
+           );
+      //PRINTLLADDR((const uip_lladdr_t *)&frame.src_addr);
+      //PRINTF("\n");
 
       return 1;
     }
@@ -678,7 +680,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
       NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
 
       /* Parse EB and attempt to associate */
-      PRINTF("TSCH: association: received packet (%u bytes) on channel %u\n", input_eb.len, current_channel);
+      PRINTF("TSCH: scan: received packet (%u bytes) on channel %u\n", input_eb.len, current_channel);
 
       tsch_associate(&input_eb, t0);
     }

@@ -59,6 +59,7 @@
 #include "sys/cooja_mt.h"
 #endif /* CONTIKI_TARGET_COOJA || CONTIKI_TARGET_COOJA_IP64 */
 #include "dev/multiradio.h"
+#include "deployment.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
@@ -619,7 +620,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               is_time_source = 0;
               /* The radio driver should return 0 if no valid packets are in the rx buffer */
               if(ack_len > 0) {
+#if TSCH_CONF_SYNC_WITH_LOWER_NODE_ID
+                is_time_source = node_id_from_linkaddr(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER)) < node_id;
+#else
                 is_time_source = current_neighbor != NULL && current_neighbor->is_time_source;
+#endif
                 if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
                     &frame, &ack_ies, &ack_hdrlen) == 0) {
                   ack_len = 0;
@@ -836,6 +841,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           if(linkaddr_cmp(&destination_address, &linkaddr_node_addr)
              || linkaddr_cmp(&destination_address, &linkaddr_null)) {
             int do_nack = 0;
+            int is_time_source = 0;
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
 
 #if TSCH_TIMESYNC_REMOVE_JITTER
@@ -884,7 +890,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
             /* If the sender is a time source, proceed to clock drift compensation */
             n = tsch_queue_get_nbr(&source_address);
-            if(n != NULL && n->is_time_source && (current_link->link_options & LINK_OPTION_TIME_KEEPING)) {
+#if TSCH_CONF_SYNC_WITH_LOWER_NODE_ID
+            is_time_source = node_id_from_linkaddr(&source_address) < node_id;
+#else
+            is_time_source = current_neighbor != NULL && current_neighbor->is_time_source;
+#endif
+            
+            if(is_time_source && (current_link->link_options & LINK_OPTION_TIME_KEEPING)) {
               int32_t since_last_timesync = ASN_DIFF(current_asn, last_sync_asn);
               /* Keep track of last sync time */
               last_sync_asn = current_asn;
@@ -906,7 +918,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.drift = drift_correction;
               log->rx.drift_used = is_drift_correction_used;
               log->rx.is_data = frame.fcf.frame_type == FRAME802154_DATAFRAME;
-              log->rx.sec_level = frame.aux_hdr.security_control.security_level;
+              log->rx.sec_level =  frame.aux_hdr.security_control.security_level;
               log->rx.estimated_drift = estimated_drift;
               log->rx.rssi = current_input->rssi;
             );
@@ -1098,5 +1110,6 @@ tsch_slot_operation_sync(rtimer_clock_t next_slot_start,
   current_asn = *next_slot_asn;
   last_sync_asn = current_asn;
   current_link = NULL;
+    printf("TSCH: tsch_slot_operation_sync %u %u\n", (unsigned)next_slot_start, (unsigned)RTIMER_NOW());
 }
 /*---------------------------------------------------------------------------*/
