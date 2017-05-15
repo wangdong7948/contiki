@@ -44,7 +44,7 @@
  * You will need to configure the defines below to match the configuration of
  * your sub-ghz network.
  */
-#define CC1200_CONF_RF_CFG            cc1200_802154g_863_870_fsk_50kbps
+#define CC1200_CONF_RF_CFG            cc1200_802154g_863_870_2gfsk_50kbps
 #define CC1200_CONF_USE_GPIO2         0
 #define CC1200_CONF_USE_RX_WATCHDOG   0
 #define CC1200_CONF_802154G           0

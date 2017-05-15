@@ -53,9 +53,11 @@
 #define CC1200_CONF_USE_GPIO2       0
 #define CC1200_CONF_USE_RX_WATCHDOG 0
 #define ANTENNA_SW_SELECT_DEF_CONF  ANTENNA_SW_SELECT_SUBGHZ
-#define CC1200_CONF_RF_CFG cc1200_868_2fsk_1_2kbps
-//#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_fsk_50kbps
+//#define CC1200_CONF_RF_CFG cc1200_868_2gfsk_1_2kbps
+//#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_2gfsk_50kbps
+#define CC1200_CONF_RF_CFG cc1200_868_4gfsk_1000kbps
 #define CC1200_NO_HDR_CHECK         1
+//#define CC1200_PRINT_ON_RX          1
 
 #endif /* PROJECT_CONF_H_ */
 

@@ -37,9 +37,8 @@
 #include "net/mac/tsch/tsch-private.h"
 
 /*
- * This is a setup for the following configuration:
- *
- * cc1200 at 1.2 kbps, 2-FSK, 12.5 kHz Channel Spacing (868 MHz).
+* Register settings exported from SmartRF Studio using the standard 50kpbs 868MHz template
+* but at a 1.2 kbps rate instead. The channel spacing is kept at 200 kHz.
  */
 
  /* Base frequency in kHz */
@@ -62,7 +61,7 @@ static const char rf_cfg_descriptor[] = "868MHz 2-FSK 1.2 kbps";
 
 /* 1 byte time: 6667 usec */
 #define CC1200_TSCH_PREAMBLE_LENGTH             33335 /* 3 bytes + 2 SFD */
-#define CC1200_TSCH_CONF_RX_WAIT                 1000
+#define CC1200_TSCH_CONF_RX_WAIT                 5000
 #define CC1200_TSCH_CONF_RX_ACK_WAIT              150
 
 #define CC1200_TSCH_DEFAULT_TS_CCA_OFFSET        1800
@@ -74,11 +73,15 @@ static const char rf_cfg_descriptor[] = "868MHz 2-FSK 1.2 kbps";
 #define CC1200_TSCH_DEFAULT_TS_RX_WAIT            (CC1200_TSCH_PREAMBLE_LENGTH + CC1200_TSCH_CONF_RX_WAIT)
 #define CC1200_TSCH_DEFAULT_TS_ACK_WAIT           (CC1200_TSCH_PREAMBLE_LENGTH + CC1200_TSCH_CONF_RX_ACK_WAIT)
 #define CC1200_TSCH_DEFAULT_TS_RX_TX              192
-#define CC1200_TSCH_DEFAULT_TS_MAX_ACK          73334 /* 7+1+3 bytes at 50 kbps */
-#define CC1200_TSCH_DEFAULT_TS_MAX_TX          866667 /* 126+1+3 bytes at 50 kbps */
+//#define CC1200_TSCH_DEFAULT_TS_MAX_ACK          73334 /* 7+1+3 bytes at 50 kbps */
+#define CC1200_TSCH_DEFAULT_TS_MAX_ACK          0 /* 0 */
+//#define CC1200_TSCH_DEFAULT_TS_MAX_TX          866667 /* 126+1+3 bytes at 50 kbps */
+#define CC1200_TSCH_DEFAULT_TS_MAX_TX          159984 /* 20+1+3 bytes at 50 kbps */
 /* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK + 550 usec slack */
 //#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040551
-#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     260534
+#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     270000
 
 /* TSCH timeslot timing (in rtimer ticks) */
 static rtimer_clock_t cc1200_1_2kbps_tsch_timing[tsch_ts_elements_count] = {
@@ -95,11 +98,6 @@ static rtimer_clock_t cc1200_1_2kbps_tsch_timing[tsch_ts_elements_count] = {
   US_TO_RTIMERTICKS_64(CC1200_TSCH_DEFAULT_TS_MAX_TX),
   US_TO_RTIMERTICKS_64(CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH),
 };
-
-/* 
- * Register settings exported from SmartRF Studio using the standard 50kpbs template
- * but at a 1.2 kbps rate instead. The channel spacing is kept at 200 kHz.
- */
   
  static const registerSetting_t preferredSettings[]= 
  {
@@ -157,7 +155,7 @@ static rtimer_clock_t cc1200_1_2kbps_tsch_timing[tsch_ts_elements_count] = {
  };
 /*---------------------------------------------------------------------------*/
 /* Global linkage: symbol name must be different in each exported file! */
-const cc1200_rf_cfg_t cc1200_868_2fsk_1_2kbps = {
+const cc1200_rf_cfg_t cc1200_868_2gfsk_1_2kbps_sp = {
   .cfg_descriptor = rf_cfg_descriptor,
   .register_settings = preferredSettings,
   .size_of_register_settings = sizeof(preferredSettings),

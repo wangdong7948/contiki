@@ -80,11 +80,11 @@ static uint8_t volatile poll_mode = 0;
 #if CC1200_RF_TESTMODE
 #undef CC1200_RF_CFG
 #if CC1200_RF_TESTMODE == 1
-#define CC1200_RF_CFG                   cc1200_802154g_863_870_fsk_50kbps
+#define CC1200_RF_CFG                   cc1200_802154g_863_870_2gfsk_50kbps
 #elif CC1200_RF_TESTMODE == 2
-#define CC1200_RF_CFG                   cc1200_802154g_863_870_fsk_50kbps
+#define CC1200_RF_CFG                   cc1200_802154g_863_870_2gfsk_50kbps
 #elif CC1200_RF_TESTMODE == 3
-#define CC1200_RF_CFG                   cc1200_802154g_863_870_fsk_50kbps
+#define CC1200_RF_CFG                   cc1200_802154g_863_870_2gfsk_50kbps
 #endif
 #endif
 /*
@@ -652,11 +652,13 @@ pollhandler(void)
     len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
     if(len > 0) {
-      //static uint32_t counter;
       packetbuf_set_datalen(len);
-      //memcpy(&counter, packetbuf_dataptr(), sizeof(counter));
-      //printf("cc1200: Received %u %u, %d dBm\n",
-        //    packetbuf_datalen(), (unsigned) counter, (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+#if CC1200_PRINT_ON_RX
+      static uint32_t counter;
+      memcpy(&counter, packetbuf_dataptr(), sizeof(counter));
+      printf("cc1200: Received %u %u, %d dBm\n",
+      packetbuf_datalen(), (unsigned) counter, (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+#endif
       NETSTACK_RDC.input();
     }
 
@@ -2141,6 +2143,9 @@ set_channel(uint8_t channel)
 
   uint8_t was_off = 0;
   uint32_t freq;
+  
+  channel %= (CC1200_RF_CFG.max_channel - CC1200_RF_CFG.min_channel + 1);
+  channel += CC1200_RF_CFG.min_channel;
 
 #if 0
   /*

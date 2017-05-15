@@ -10,6 +10,7 @@ import pandas as pd
 from pandas import *
 from datetime import *
 from collections import OrderedDict
+from IPython import embed
 
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
@@ -17,7 +18,7 @@ pd.set_option('display.max_columns', None)
 def parseTxData(log):
     res = re.compile('^\TSCH: {asn-([a-f\d]+).([a-f\d]+) link-(\d+)-(\d+)-(\d+)-(\d+) [\s\d-]*ch-(\d+)\} bc-([01])-0 (\d*) tx').match(log)
     if res:
-        asn_ms = int(res.group(1), 16)
+        #asn_ms = int(res.group(1), 16)
         asn_ls = int(res.group(2), 16)
         return {'asn': asn_ls, # ignore MSB
               'radio': "cc1200" if res.group(3) == "0" else "cc2538",
@@ -32,7 +33,7 @@ def parseTxData(log):
 def parseRxData(log):
     res = re.compile('^\TSCH: {asn-([a-f\d]+).([a-f\d]+) link-(\d+)-(\d+)-(\d+)-(\d+) [\s\d-]*ch-(\d+)\} bc-([01])-0 (\d*) rx (\d*) rssi ([-\d]*),.* edr ([-\d]*)').match(log)
     if res:
-        asn_ms = int(res.group(1), 16)
+        #asn_ms = int(res.group(1), 16)
         asn_ls = int(res.group(2), 16)
         return {'asn': asn_ls, # ignore MSB
               'radio': "cc1200" if res.group(3) == "0" else "cc2538",
@@ -44,7 +45,7 @@ def parseRxData(log):
               #'packet_len': int(res.group(9)),
               'source': int(res.group(10)),
               'rssi': int(res.group(11)),
-              'edr': int(res.group(12))
+              #'edr': int(res.group(12))
             }
 
 def parseLine(line):
@@ -53,12 +54,19 @@ def parseLine(line):
         return int(res.group(1)), int(res.group(2)), res.group(3)
     return None, None, None
 
-def doParse(file):
+def doParse(dir):
+    file = os.path.join(dir, "logs", "log.txt")    
+    h5file = os.path.join(dir, 'df.h5')
+    if os.path.exists(h5file):
+        print "Loading %s file" %(h5file)
+        return pd.read_hdf(h5file,'df')
+    
     baseTime = None
     time = None
     lastPrintedTime = 0
     data = []
 
+    print "\nProcessing %s" %(file)
     for line in open(file, 'r').readlines():
         # match time, id, module, log; The common format for all log lines
         t, id, log = parseLine(line)
@@ -76,7 +84,7 @@ def doParse(file):
         if res != None:
             res["time"] = timedelta(microseconds=time);
             res["destination"] = id;
-            res["isTx"] = False;4
+            res["isTx"] = False;
             if res["source"] != 0:
                 data.append(res)
         else:
@@ -89,6 +97,11 @@ def doParse(file):
 
     df = DataFrame(data)
     df = df.set_index("time")
+    
+    # save as HDF5
+    print "Saving to %s file" %(h5file)
+    df.to_hdf(h5file,'df')
+    
     return df
 
 def computePrrBack(x):
@@ -106,10 +119,7 @@ def getPrrBack(df):
     # only select links A->B where A<B
     statsFlat = stats.reset_index()
     statsFlat = statsFlat[(statsFlat.source < statsFlat.destination)]
-    # compute PRR of the reverse link
-#    stats["prr-back"] = 
-    # get B->A link from A-?B
-    
+    # get B->A link from A-?B    
     statsBackFlat = statsFlat.apply(computePrrBack, axis=1)
     statsFlat = statsBackFlat.join(statsFlat, rsuffix="Back")
     return statsFlat
@@ -149,21 +159,34 @@ def main():
         dir = sys.argv[1].rstrip('/')
 
     file = os.path.join(dir, "logs", "log.txt")
-    print "\nProcessing %s" %(file)
-    df = doParse("jobs/3087_node/logs/log.txt")
     
+    df = doParse(dir)
+
+    print "Extracting statistics"
     stats = getChannelStats(df)
-    stats.groupby("radio").boxplot(column='prr', by='channel')
-    stats.groupby("radio").boxplot(column='prr', by='source')
-    stats.groupby("radio").boxplot(column='rssi', by='channel')
-    stats.groupby("radio").boxplot(column='rssi', by='source')
+    tsPrrcc1200, tsRssicc1200 = getTimeSeries(df, "cc1200")
+    tsPrrcc2538, tsRssicc2538 = getTimeSeries(df, "cc2538")
+    #prrBack = getPrrBack(df)
+            
+    tsPrrcc1200.reset_index().plot()
+    plt.savefig(os.path.join(dir, "timeline-cc1200-prr.pdf"))
+    tsRssicc1200.reset_index().plot()    
+    plt.savefig(os.path.join(dir, "timeline-cc1200-rssi.pdf"))
+    tsPrrcc2538.reset_index().plot()
+    plt.savefig(os.path.join(dir, "timeline-cc2538-prr.pdf"))
+    tsRssicc2538.reset_index().plot()
+    plt.savefig(os.path.join(dir, "timeline-cc2538-rssi.pdf"))
     
-    for radio in ["cc1200", "cc2538"]:
-        tsPrr, tsRssi = getTimeSeries(df, radio)
-        tsPrr.reset_index().plot()
-        tsRssi.reset_index().plot()
-        
-    prrBack = getPrrBack(df)
-    prrBack.groupby("radio").plot.scatter(x='rxCount',y='rxCountBack')
+    stats.groupby("radio").boxplot(column='prr', by='channel')
+    plt.savefig(os.path.join(dir, "prr-perchannel.pdf"))
+    stats.groupby("radio").boxplot(column='prr', by='source')
+    plt.savefig(os.path.join(dir, "prr-persource.pdf"))
+    stats.groupby("radio").boxplot(column='rssi', by='channel')
+    plt.savefig(os.path.join(dir, "rssi-perchannel.pdf"))
+    stats.groupby("radio").boxplot(column='rssi', by='source')
+    plt.savefig(os.path.join(dir, "rssi-persource.pdf"))
+    #prrBack.groupby("radio").plot.scatter(x='rxCount',y='rxCountBack')
+    
+#    embed()
     
 main()

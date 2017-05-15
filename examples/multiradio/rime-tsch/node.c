@@ -47,6 +47,13 @@
 #include "dev/multiradio.h"
 #include "apps/deployment/deployment.h"
 
+#include "cc1200-const.h"
+#include "cc1200-conf.h"
+#include "cc1200-arch.h"
+#include "cc1200-rf-cfg.h"
+
+extern const cc1200_rf_cfg_t CC1200_RF_CFG;
+
 static uint32_t counter;
 #define TSCH_COORDINATOR_ID 1
 #define BROADCAST_CHANNEL 129
@@ -145,13 +152,16 @@ PROCESS_THREAD(test_process, ev, data)
   
   while(1) {
 
-    etimer_set(&et, 4*CLOCK_SECOND);
+    etimer_set(&et, 8*CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     //printf("App: sending seq %u\n", (unsigned)counter);
     packetbuf_copyfrom(&counter, sizeof(counter) + 4);
     broadcast_send(&bc);
     counter++;
+    if(counter % 100 == 0) {
+      printf("Debug %u\n", CC1200_RF_CFG.max_channel - CC1200_RF_CFG.min_channel + 1);
+    }
   }
 
   PROCESS_END();

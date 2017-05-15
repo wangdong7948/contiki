@@ -94,10 +94,11 @@ PROCESS_THREAD(cc1200_demo_process, ev, data)
   radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
   NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode);
 #undef CUSTOM_CHANNEL
-#define CUSTOM_CHANNEL 8
+#define CUSTOM_CHANNEL 0
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, CUSTOM_CHANNEL);
 
-  deployment_init(NULL, NULL, 1);
+  node_id = get_node_id();
+  NETSTACK_MAC.on();
 
   while(1) {
     PROCESS_YIELD();
