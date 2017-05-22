@@ -180,6 +180,9 @@ set_channel(uint8_t channel)
 
   PRINTF("RF: Set Channel\n");
 
+  channel %= (CC2538_RF_CHANNEL_MAX - CC2538_RF_CHANNEL_MIN + 1);
+  channel += CC2538_RF_CHANNEL_MIN;
+
   if((channel < CC2538_RF_CHANNEL_MIN) || (channel > CC2538_RF_CHANNEL_MAX)) {
     return CC2538_RF_CHANNEL_SET_ERROR;
   }
@@ -914,10 +917,10 @@ set_value(radio_param_t param, radio_value_t value)
     }
     return RADIO_RESULT_INVALID_VALUE;
   case RADIO_PARAM_CHANNEL:
-    if(value < CC2538_RF_CHANNEL_MIN ||
+    /*if(value < CC2538_RF_CHANNEL_MIN ||
        value > CC2538_RF_CHANNEL_MAX) {
       return RADIO_RESULT_INVALID_VALUE;
-    }
+    }*/
     if(set_channel(value) == CC2538_RF_CHANNEL_SET_ERROR) {
       return RADIO_RESULT_ERROR;
     }

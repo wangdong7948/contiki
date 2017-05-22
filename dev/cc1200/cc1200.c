@@ -50,7 +50,7 @@
 #include "net/mac/tsch/tsch-asn.h"
 static struct asn_divisor_t tsch_hopping_sequence_divisor;
 
-static int8_t rssi;
+static int16_t rssi;
 static rtimer_clock_t sfd_timestamp = 0;
 /* Are we currently in poll mode? Disabled by default */
 static uint8_t volatile poll_mode = 0;
@@ -950,7 +950,7 @@ read(void *buf, unsigned short buf_len)
 
   if(rx_pkt_len > 0) {
 
-    rssi = rx_pkt[rx_pkt_len - 2];
+    rssi = (int8_t)rx_pkt[rx_pkt_len - 2] + (int)CC1200_RF_CFG.rssi_offset;
     /* CRC is already checked */
     uint8_t crc_lqi = rx_pkt[rx_pkt_len - 1];
 
@@ -1276,7 +1276,7 @@ get_value(radio_param_t param, radio_value_t *value)
                   & CC1200_CARRIER_SENSE_VALID),
                   RTIMER_SECOND / 100);
     RF_ASSERT(rssi0 & CC1200_CARRIER_SENSE_VALID);
-    rssi1 = (int)single_read(CC1200_RSSI1) + CC1200_RF_CFG.rssi_offset;
+    rssi1 = (int8_t)single_read(CC1200_RSSI1) + (int)CC1200_RF_CFG.rssi_offset;
     *value = (radio_value_t)rssi1;
     }
   
@@ -2503,7 +2503,7 @@ cc1200_rx_interrupt(void)
 #if APPEND_STATUS
       uint8_t crc_lqi = buf[bytes_read - 1];
 #else
-      int8_t rssi = single_read(CC1200_RSSI1) + (int8_t)CC1200_RF_CFG.rssi_offset;
+      int8_t rssi = single_read(CC1200_RSSI1);
       uint8_t crc_lqi = single_read(CC1200_LQI_VAL);
 #endif
 
