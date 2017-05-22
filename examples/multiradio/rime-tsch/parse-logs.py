@@ -12,11 +12,13 @@ from datetime import *
 from collections import OrderedDict
 from IPython import embed
 
+NNODES = 25
+
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
 
 def parseTxData(log):
-    res = re.compile('^\TSCH: {asn-([a-f\d]+).([a-f\d]+) link-(\d+)-(\d+)-(\d+)-(\d+) [\s\d-]*ch-(\d+)\} bc-([01])-0 (\d*) tx').match(log)
+    res = re.compile('^\TSCH: {asn-([a-f\d]+).([a-f\d]+) link-(\d+)-(\d+)-(\d+)-(\d+) [\s\d-]*ch-(\d+)\} bc-([01])-0 (\d*) tx 0, st 0-1 rssi ([-\d]*)').match(log)
     if res:
         #asn_ms = int(res.group(1), 16)
         asn_ls = int(res.group(2), 16)
@@ -28,6 +30,7 @@ def parseTxData(log):
               'channel': int(res.group(7)),
               #'is_eb': res.group(8) == "0",
               #'packet_len': int(res.group(9)),
+              'noise': int(res.group(10)),
             }
             
 def parseRxData(log):
@@ -108,7 +111,7 @@ def doParse(dir):
 def getChannelStats(df):
     # group by radio, channel and source
     print "Extracting statistics: grouping"
-    groupAll = df.groupby(['radio','channel','source','destination'])['rssi','isTx']
+    groupAll = df.groupby(['radio','channel','source','destination'])#['rssi','isTx']
     # compute txCount, rxCount and mean RSSI
     stats = groupAll.agg({'rssi': ["count", "mean"], 'isTx': 'sum'})
     stats.columns = ["txCount", "rxCount", "rssi"]
@@ -127,19 +130,22 @@ def getTimeSeries(df, radio):
     # select logs for the target radtio
     dfRadio = df[(df.radio == radio)]
     # create a timeseries, grouped by rssi and isTx
-    groupAll = dfRadio.groupby([pd.TimeGrouper("5Min"), 'channel'])[['rssi','isTx']]
+    groupAll = dfRadio.groupby([pd.TimeGrouper("5Min"), 'channel'])[['noise','rssi','isTx']]
     # compute txCount, rxCount and mean RSSI
-    tsStats = groupAll.agg({'rssi': ["count", "mean"], 'isTx': 'sum'})
-    tsStats.columns = ["txCount", "rxCount", "rssi"]
+    tsStats = groupAll.agg({'noise': "mean", 'rssi': ["count", "mean"], 'isTx': 'sum'})
+    tsStats.columns = ["txCount", "rxCount", "rssi", "noise"]
     # compute PRR
-    tsStats["prr"] = tsStats["rxCount"] / tsStats["txCount"]
+    tsStats["prr"] = (tsStats["rxCount"] / (NNODES-1)) / tsStats["txCount"]
     # keep only prr and unstack
     tsPrr = tsStats[['prr']].unstack()
     tsPrr.columns = tsPrr.columns.droplevel()
     # keep only rssi and unstack
     tsRssi = tsStats[['rssi']].unstack()
     tsRssi.columns = tsRssi.columns.droplevel()
-    return tsPrr, tsRssi
+    # keep only nois and unstack
+    tsNoise = tsStats[['noise']].unstack()
+    tsNoise.columns = tsNoise.columns.droplevel()
+    return tsPrr, tsRssi, tsNoise
     
 def main():
     if len(sys.argv) < 2:
@@ -152,16 +158,18 @@ def main():
     df = doParse(dir)
 
     stats = getChannelStats(df)
-    tsPrrcc1200, tsRssicc1200 = getTimeSeries(df, "cc1200")
-    tsPrrcc2538, tsRssicc2538 = getTimeSeries(df, "cc2538")
+    tsPrrcc1200, tsRssicc1200, tsNoisecc1200 = getTimeSeries(df, "cc1200")
+    tsPrrcc2538, tsRssicc2538, tsNoisecc2538 = getTimeSeries(df, "cc2538")
 
     print "Plotting"
-            
+
     if len(tsPrrcc1200) > 0:
         tsPrrcc1200.reset_index().plot()
         plt.savefig(os.path.join(dir, "timeline-cc1200-prr.pdf"))
         tsRssicc1200.reset_index().plot()    
         plt.savefig(os.path.join(dir, "timeline-cc1200-rssi.pdf"))
+        tsNoisecc1200.reset_index().plot()    
+        plt.savefig(os.path.join(dir, "timeline-cc1200-noise.pdf"))
         stats[(stats.source < stats.destination) & (stats.radio == "cc1200")].plot.scatter(x='prr',y='prrBack')
         plt.savefig(os.path.join(dir, "prr-correlation-cc1200.pdf"))
     if len(tsPrrcc2538) > 0:
@@ -169,6 +177,8 @@ def main():
         plt.savefig(os.path.join(dir, "timeline-cc2538-prr.pdf"))
         tsRssicc2538.reset_index().plot()
         plt.savefig(os.path.join(dir, "timeline-cc2538-rssi.pdf"))
+        tsNoisecc2538.reset_index().plot()    
+        plt.savefig(os.path.join(dir, "timeline-cc2538-noise.pdf"))
         stats[(stats.source < stats.destination) & (stats.radio == "cc2538")].plot.scatter(x='prr',y='prrBack')
         plt.savefig(os.path.join(dir, "prr-correlation-cc2538.pdf"))
     

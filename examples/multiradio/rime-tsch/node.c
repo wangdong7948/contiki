@@ -58,7 +58,7 @@ static uint32_t counter;
 #define TSCH_COORDINATOR_ID 1
 #define BROADCAST_CHANNEL 129
 
-#define DEBUG 1
+#define DEBUG WITH_SINGLE_SENDER
 
 #if DEBUG
 #define PRINTF(...) printf(__VA_ARGS__)

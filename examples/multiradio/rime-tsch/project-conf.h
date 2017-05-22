@@ -41,9 +41,9 @@
 #ifndef __PROJECT_CONF_H__
 #define __PROJECT_CONF_H__
 
-#define WITH_MULTIRADIO 0
-#define WITH_SINGLE_SENDER 1
-#define WITH_SINGLE_CHANNEL 1
+#define WITH_MULTIRADIO 1
+#define WITH_SINGLE_SENDER 0
+#define WITH_SINGLE_CHANNEL 0
 
 /* Netstack layers */
 #undef NETSTACK_CONF_MAC
@@ -95,7 +95,8 @@
 
 //#define CC1200_CONF_RF_CFG cc1200_868_2gfsk_1_2kbps_sp /* sp: short packets */
 //#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_2gfsk_50kbps
-#define CC1200_CONF_RF_CFG cc1200_868_4gfsk_1000kbps
+#define CC1200_CONF_RF_CFG cc1200_868_2gfsk_250kbps
+//#define CC1200_CONF_RF_CFG cc1200_868_4gfsk_1000kbps
 
 #else /* WITH_MULTIRADIO */
 
@@ -106,8 +107,8 @@
 #undef TSCH_CONF_SCANNING_RADIO
 #define TSCH_CONF_SCANNING_RADIO NETSTACK_CONF_RADIO
 //#define NETSTACK_CONF_RADIO         cc1200_driver
-//#define CC1200_CONF_RF_CFG cc1200_868_2gfsk_1_2kbps_sp /* sp: short packets */
-#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_2gfsk_50kbps
+#define CC1200_CONF_RF_CFG cc1200_868_2gfsk_1_2kbps_sp /* sp: short packets */
+//#define CC1200_CONF_RF_CFG cc1200_802154g_863_870_2gfsk_50kbps
 //#define CC1200_CONF_RF_CFG cc1200_868_4gfsk_1000kbps
 #define CC1200_NO_HDR_CHECK         1
 #endif /* WITH_MULTIRADIO */
