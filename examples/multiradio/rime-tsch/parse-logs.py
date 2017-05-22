@@ -92,6 +92,7 @@ def doParse(dir):
             if res != None:
                 res["time"] = timedelta(microseconds=time);
                 res["source"] = id;
+                res["destination"] = 0;
                 res["isTx"] = True;
                 data.append(res)
 
@@ -104,35 +105,23 @@ def doParse(dir):
     
     return df
 
-def computePrrBack(x):
-    try:
-        return stats.loc[x.radio].loc[x.channel].loc[x.destination].loc[x.source]
-    except:
-        return 0
-
-def getPrrBack(df):
-    # group by radio, channel, source and destination
+def getChannelStats(df):
+    # group by radio, channel and source
+    print "Extracting statistics: grouping"
     groupAll = df.groupby(['radio','channel','source','destination'])['rssi','isTx']
     # compute txCount, rxCount and mean RSSI
     stats = groupAll.agg({'rssi': ["count", "mean"], 'isTx': 'sum'})
     stats.columns = ["txCount", "rxCount", "rssi"]
-    # only select links A->B where A<B
     statsFlat = stats.reset_index()
-    statsFlat = statsFlat[(statsFlat.source < statsFlat.destination)]
-    # get B->A link from A-?B    
-    statsBackFlat = statsFlat.apply(computePrrBack, axis=1)
-    statsFlat = statsBackFlat.join(statsFlat, rsuffix="Back")
-    return statsFlat
-
-def getChannelStats(df):
-    # group by radio, channel and source
-    groupAll = df.groupby(['radio','channel','source'])['rssi','isTx']
-    # compute txCount, rxCount and mean RSSI
-    stats = groupAll.agg({'rssi': ["count", "mean"], 'isTx': 'sum'})
-    stats.columns = ["txCount", "rxCount", "rssi"]
+    # compute revers link's rx count
+    print "Extracting statistics: reverse link stats"
+    statsFlat["rxCountBack"] = statsFlat.apply(lambda x, stats=stats: stats.loc[x.radio, x.channel, x.destination, x.source].rxCount if (x.radio, x.channel, x.destination, x.source) in stats.index.tolist() else 0, axis=1)
     # compute PRR from rxCount and TxConut
-    stats["prr"] = stats["rxCount"] / stats["txCount"]
-    return stats.reset_index()
+    print "Extracting statistics: link PRR"
+    statsFlat["prr"] = statsFlat.apply(lambda x, stats=stats: min(1, x.rxCount / stats.loc[x.radio, x.channel, x.source, 0].txCount), axis=1)
+    print "Extracting statistics: reverse link PRR"
+    statsFlat["prrBack"] = statsFlat.apply(lambda x, stats=stats: min(1, x.rxCountBack / stats.loc[x.radio, x.channel, x.source, 0].txCount), axis=1)
+    return statsFlat
 
 def getTimeSeries(df, radio):
     # select logs for the target radtio
@@ -162,31 +151,38 @@ def main():
     
     df = doParse(dir)
 
-    print "Extracting statistics"
     stats = getChannelStats(df)
     tsPrrcc1200, tsRssicc1200 = getTimeSeries(df, "cc1200")
     tsPrrcc2538, tsRssicc2538 = getTimeSeries(df, "cc2538")
-    #prrBack = getPrrBack(df)
+
+    print "Plotting"
             
-    tsPrrcc1200.reset_index().plot()
-    plt.savefig(os.path.join(dir, "timeline-cc1200-prr.pdf"))
-    tsRssicc1200.reset_index().plot()    
-    plt.savefig(os.path.join(dir, "timeline-cc1200-rssi.pdf"))
-    tsPrrcc2538.reset_index().plot()
-    plt.savefig(os.path.join(dir, "timeline-cc2538-prr.pdf"))
-    tsRssicc2538.reset_index().plot()
-    plt.savefig(os.path.join(dir, "timeline-cc2538-rssi.pdf"))
+    if len(tsPrrcc1200) > 0:
+        tsPrrcc1200.reset_index().plot()
+        plt.savefig(os.path.join(dir, "timeline-cc1200-prr.pdf"))
+        tsRssicc1200.reset_index().plot()    
+        plt.savefig(os.path.join(dir, "timeline-cc1200-rssi.pdf"))
+        stats[(stats.source < stats.destination) & (stats.radio == "cc1200")].plot.scatter(x='prr',y='prrBack')
+        plt.savefig(os.path.join(dir, "prr-correlation-cc1200.pdf"))
+    if len(tsPrrcc2538) > 0:
+        tsPrrcc2538.reset_index().plot()
+        plt.savefig(os.path.join(dir, "timeline-cc2538-prr.pdf"))
+        tsRssicc2538.reset_index().plot()
+        plt.savefig(os.path.join(dir, "timeline-cc2538-rssi.pdf"))
+        stats[(stats.source < stats.destination) & (stats.radio == "cc2538")].plot.scatter(x='prr',y='prrBack')
+        plt.savefig(os.path.join(dir, "prr-correlation-cc2538.pdf"))
     
     stats.groupby("radio").boxplot(column='prr', by='channel')
     plt.savefig(os.path.join(dir, "prr-perchannel.pdf"))
     stats.groupby("radio").boxplot(column='prr', by='source')
     plt.savefig(os.path.join(dir, "prr-persource.pdf"))
+    stats.groupby("radio").boxplot(column='prr', by='destination')
+    plt.savefig(os.path.join(dir, "prr-destination.pdf"))
     stats.groupby("radio").boxplot(column='rssi', by='channel')
     plt.savefig(os.path.join(dir, "rssi-perchannel.pdf"))
     stats.groupby("radio").boxplot(column='rssi', by='source')
     plt.savefig(os.path.join(dir, "rssi-persource.pdf"))
-    #prrBack.groupby("radio").plot.scatter(x='rxCount',y='rxCountBack')
-    
-#    embed()
-    
+    stats.groupby("radio").boxplot(column='rssi', by='destination')
+    plt.savefig(os.path.join(dir, "rssi-perdestination.pdf"))
+
 main()

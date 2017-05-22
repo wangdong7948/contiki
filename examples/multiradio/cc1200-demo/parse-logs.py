@@ -7,6 +7,7 @@ import math
 from sets import Set
 from pylab import *
 from collections import OrderedDict
+from IPython import embed
 
 nodeIDs = range(1,26)
 
@@ -67,6 +68,9 @@ def doParse(file):
     
     for id in recvCount.keys():
         print "%2u: %.2f %d" %(id, recvCount[id]/float(sendCount), np.mean(recvRssi[id]))
+    
+    print "Total number of receivers: %u" %(len(recvCount.keys()))
+    print "Average number of receivers: %.2f" %(sum(recvCount.values())/float(sendCount))
 
             
 def main():
