@@ -41,7 +41,8 @@
 #ifndef __PROJECT_CONF_H__
 #define __PROJECT_CONF_H__
 
-#define WITH_MULTIRADIO 1
+#define WITH_MULTIRADIO 0
+#define WITH_SINGLE_SENDER 0
 
 /* Netstack layers */
 #undef NETSTACK_CONF_MAC

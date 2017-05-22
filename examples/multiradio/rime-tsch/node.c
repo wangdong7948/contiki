@@ -58,6 +58,14 @@ static uint32_t counter;
 #define TSCH_COORDINATOR_ID 1
 #define BROADCAST_CHANNEL 129
 
+#define DEBUG 1
+
+#if DEBUG
+#define PRINTF(x) printf x
+#else
+#define PRINTF(x)
+#endif
+
 /*---------------------------------------------------------------------------*/
 PROCESS(test_process, "Rime Node");
 AUTOSTART_PROCESSES(&test_process);
@@ -66,11 +74,11 @@ AUTOSTART_PROCESSES(&test_process);
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
-  // printf("App: received from %u seq %u rssi %d\n",
-  //       node_id_from_linkaddr(from),
-  //       (unsigned)*(uint32_t *)packetbuf_dataptr(),
-  //       (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)
-  //       );
+   PRINTF("App: received from %u seq %u rssi %d\n",
+         node_id_from_linkaddr(from),
+         (unsigned)*(uint32_t *)packetbuf_dataptr(),
+         (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)
+         );
 }
 static const struct broadcast_callbacks bc_rx = { broadcast_recv };
 static struct broadcast_conn bc;
@@ -149,18 +157,19 @@ PROCESS_THREAD(test_process, ev, data)
 
   NETSTACK_MAC.on();
   broadcast_open(&bc, BROADCAST_CHANNEL, &bc_rx);
-  
-  while(1) {
 
-    etimer_set(&et, 8*CLOCK_SECOND);
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+#if WITH_SINGLE_SENDER
+  if(node_id == 1)
+#endif
+  {
+    while(1) {
+      etimer_set(&et, 8*CLOCK_SECOND);
+      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    //printf("App: sending seq %u\n", (unsigned)counter);
-    packetbuf_copyfrom(&counter, sizeof(counter) + 4);
-    broadcast_send(&bc);
-    counter++;
-    if(counter % 100 == 0) {
-      printf("Debug %u\n", CC1200_RF_CFG.max_channel - CC1200_RF_CFG.min_channel + 1);
+      PRINTF("App: sending seq %u\n", (unsigned)counter);
+      packetbuf_copyfrom(&counter, sizeof(counter) + 4);
+      broadcast_send(&bc);
+      counter++;
     }
   }
 

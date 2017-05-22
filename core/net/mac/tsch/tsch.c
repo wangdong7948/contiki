@@ -1022,7 +1022,13 @@ turn_on(void)
     /* Process tx/rx callback and log messages whenever polled */
     process_start(&tsch_pending_events_process, NULL);
     /* periodically send TSCH EBs */
+#if WITH_SINGLE_SENDER
+    if(tsch_is_coordinator) {
+      process_start(&tsch_send_eb_process, NULL);
+    }
+#else
     process_start(&tsch_send_eb_process, NULL);
+#endif
     /* try to associate to a network or start one if setup as coordinator */
     process_start(&tsch_process, NULL);
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
