@@ -42,7 +42,8 @@
 #define __PROJECT_CONF_H__
 
 #define WITH_MULTIRADIO 0
-#define WITH_SINGLE_SENDER 0
+#define WITH_SINGLE_SENDER 1
+#define WITH_SINGLE_CHANNEL 1
 
 /* Netstack layers */
 #undef NETSTACK_CONF_MAC
@@ -118,8 +119,11 @@
 #define CC1200_CONF_USE_RX_WATCHDOG 0
 #define ANTENNA_SW_SELECT_DEF_CONF  ANTENNA_SW_SELECT_SUBGHZ
 #define TSCH_CONF_HOPPING_SEQUENCE_MAX_LEN 34
+#if WITH_SINGLE_CHANNEL
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]){ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+#else
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]){ 16, 17, 18, 19, 26, 15, 25, 22, 23, 11, 12, 13, 24, 14, 20, 21, 1, 32, 6, 5, 10, 28, 30, 27, 29, 8, 0, 4, 31, 3, 9, 7, 33, 2 }
-//#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]){ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+#endif
 #define TSCH_CONF_EB_PERIOD (4 * CLOCK_SECOND)
 #define TSCH_CONF_MAX_EB_PERIOD (4 * CLOCK_SECOND)
 #define TSCH_CONF_KEEPALIVE_TIMEOUT 0
