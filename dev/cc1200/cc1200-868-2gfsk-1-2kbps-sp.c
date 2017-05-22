@@ -81,7 +81,7 @@ static const char rf_cfg_descriptor[] = "868MHz 2-FSK 1.2 kbps";
 //#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040551 // full slot
 //#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000 // full slot, rounded
 //#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     260534 // shorter
-#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     270000 // shorter, rounded
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     270000 // shorter, rounded
 //#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     209984 // shorter without ack
 #define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     215000 // shorter without ack, rounded
 
