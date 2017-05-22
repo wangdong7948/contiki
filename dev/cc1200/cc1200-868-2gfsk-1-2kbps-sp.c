@@ -78,10 +78,12 @@ static const char rf_cfg_descriptor[] = "868MHz 2-FSK 1.2 kbps";
 //#define CC1200_TSCH_DEFAULT_TS_MAX_TX          866667 /* 126+1+3 bytes at 50 kbps */
 #define CC1200_TSCH_DEFAULT_TS_MAX_TX          159984 /* 20+1+3 bytes at 50 kbps */
 /* TSCH_DEFAULT_TS_TX_OFFSET + TSCH_DEFAULT_TS_MAX_TX + TSCH_DEFAULT_TS_TX_ACK_DELAY + TSCH_DEFAULT_TS_MAX_ACK + 550 usec slack */
-//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040551
-//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000
-//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     260534
-#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     270000
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH    1040551 // full slot
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     1050000 // full slot, rounded
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     260534 // shorter
+#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     270000 // shorter, rounded
+//#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     209984 // shorter without ack
+#define CC1200_TSCH_DEFAULT_TS_TIMESLOT_LENGTH     215000 // shorter without ack, rounded
 
 /* TSCH timeslot timing (in rtimer ticks) */
 static rtimer_clock_t cc1200_1_2kbps_tsch_timing[tsch_ts_elements_count] = {
