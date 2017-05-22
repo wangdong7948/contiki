@@ -635,7 +635,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
 
   while(!tsch_is_associated && !tsch_is_coordinator) {
     /* Hop to any channel offset */
-    static uint8_t current_channel = 0;
+    static int current_channel = -1;
 
     /* We are not coordinator, try to associate */
     rtimer_clock_t t0;
@@ -650,7 +650,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
     }
 
     /* Switch to a (new) channel for scanning */
-    if(current_channel == 0 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {
+    if(current_channel == -1 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {
       /* Pick a channel at random in TSCH_JOIN_HOPPING_SEQUENCE */
       uint8_t scan_channel = TSCH_JOIN_HOPPING_SEQUENCE[
           random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
