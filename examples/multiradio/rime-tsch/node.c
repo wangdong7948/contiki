@@ -61,9 +61,9 @@ static uint32_t counter;
 #define DEBUG 1
 
 #if DEBUG
-#define PRINTF(x) printf x
+#define PRINTF(...) printf(__VA_ARGS__)
 #else
-#define PRINTF(x)
+#define PRINTF(...)
 #endif
 
 /*---------------------------------------------------------------------------*/
