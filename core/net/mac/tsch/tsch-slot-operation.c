@@ -490,6 +490,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   uint8_t in_queue;
   static int dequeued_index;
   static int packet_ready = 1;
+#if TSCH_SAMPLE_RSSI
+  static int16_t rssi;
+#endif
 
   PT_BEGIN(pt);
 
@@ -550,6 +553,19 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* prepare packet to send: copy to radio buffer */
       if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
         static rtimer_clock_t tx_duration;
+
+
+#if TSCH_SAMPLE_RSSI
+        /* delay before CCA */
+        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
+        tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+        /* Measure RSSI */
+        radio_value_t rssi_value;
+        NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &rssi_value);
+        rssi = (int16_t)rssi_value;
+        /* there is not enough time to turn radio off */
+        /*  NETSTACK_RADIO.off(); */
+#endif /* TSCH_SAMPLE_RSSI */
 
 #if CCA_ENABLED
         cca_status = 1;
@@ -720,6 +736,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     log->tx.sec_level = 0;
 #endif /* LLSEC802154_ENABLED */
     log->tx.dest = TSCH_LOG_ID_FROM_LINKADDR(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
+#if TSCH_SAMPLE_RSSI
+    log->tx.rssi = rssi;
+#endif
     );
 
     /* Poll process for later processing of packet sent events and logs */

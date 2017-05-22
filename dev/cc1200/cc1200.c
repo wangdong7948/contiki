@@ -1270,13 +1270,14 @@ get_value(radio_param_t param, radio_value_t *value)
 
   case RADIO_PARAM_RSSI:
     {
-    int8_t rssi0;
+    int16_t rssi0, rssi1;
     /* Wait for CARRIER_SENSE_VALID signal */
     BUSYWAIT_UNTIL(((rssi0 = single_read(CC1200_RSSI0))
                   & CC1200_CARRIER_SENSE_VALID),
                   RTIMER_SECOND / 100);
     RF_ASSERT(rssi0 & CC1200_CARRIER_SENSE_VALID);
-    *value = (radio_value_t)rssi0;
+    rssi1 = (int)single_read(CC1200_RSSI1) + CC1200_RF_CFG.rssi_offset;
+    *value = (radio_value_t)rssi1;
     }
   
     return RADIO_RESULT_OK;
@@ -1640,7 +1641,8 @@ configure(void)
 #endif
 
   /* RSSI offset */
-  single_write(CC1200_AGC_GAIN_ADJUST, (int8_t)CC1200_RF_CFG.rssi_offset);
+  //single_write(CC1200_AGC_GAIN_ADJUST, (int8_t)CC1200_RF_CFG.rssi_offset);
+  single_write(CC1200_AGC_GAIN_ADJUST, 0);
 
   /***************************************************************************
    * RF test modes needed during hardware development
@@ -2501,7 +2503,7 @@ cc1200_rx_interrupt(void)
 #if APPEND_STATUS
       uint8_t crc_lqi = buf[bytes_read - 1];
 #else
-      int8_t rssi = single_read(CC1200_RSSI1);
+      int8_t rssi = single_read(CC1200_RSSI1) + (int8_t)CC1200_RF_CFG.rssi_offset;
       uint8_t crc_lqi = single_read(CC1200_LQI_VAL);
 #endif
 
