@@ -1219,6 +1219,40 @@ set_poll_mode(uint8_t enable)
   poll_mode = enable;
 }
 /*---------------------------------------------------------------------------*/
+/**
+ * \brief Reads the current signal strength (RSSI)
+ * \return The current RSSI in dBm
+ *
+ * This function reads the current RSSI on the currently configured
+ * channel.
+ */
+static int16_t
+get_rssi(void)
+{
+  int16_t rssi0, rssi1;
+  uint8_t was_off = 0;
+
+  /* If we are off, turn on first */
+  if(!(rf_flags & RF_ON)) {
+    was_off = 1;
+    on();
+  }
+
+  /* Wait for CARRIER_SENSE_VALID signal */
+  BUSYWAIT_UNTIL(((rssi0 = single_read(CC1200_RSSI0))
+                & CC1200_CARRIER_SENSE_VALID),
+                RTIMER_SECOND / 100);
+  RF_ASSERT(rssi0 & CC1200_CARRIER_SENSE_VALID);
+  rssi1 = (int8_t)single_read(CC1200_RSSI1) + (int)CC1200_RF_CFG.rssi_offset;  
+
+  /* If we were off, turn back off */
+  if(was_off) {
+    off();
+  }
+
+  return rssi1;
+}
+/*---------------------------------------------------------------------------*/
 /* Get a radio parameter value. */
 static radio_result_t
 get_value(radio_param_t param, radio_value_t *value)
@@ -1269,17 +1303,7 @@ get_value(radio_param_t param, radio_value_t *value)
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_RSSI:
-    {
-    int16_t rssi0, rssi1;
-    /* Wait for CARRIER_SENSE_VALID signal */
-    BUSYWAIT_UNTIL(((rssi0 = single_read(CC1200_RSSI0))
-                  & CC1200_CARRIER_SENSE_VALID),
-                  RTIMER_SECOND / 100);
-    RF_ASSERT(rssi0 & CC1200_CARRIER_SENSE_VALID);
-    rssi1 = (int8_t)single_read(CC1200_RSSI1) + (int)CC1200_RF_CFG.rssi_offset;
-    *value = (radio_value_t)rssi1;
-    }
-  
+    *value = get_rssi();
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_LAST_RSSI:
