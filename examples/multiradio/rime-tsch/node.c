@@ -114,6 +114,10 @@ PROCESS_THREAD(test_process, ev, data)
       LINK_OPTION_TX,
       LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
       node_id - 1, 0);
+  tsch_schedule_add_link(sf_cc1200,
+      LINK_OPTION_SAMPLE_RSSI,
+      LINK_TYPE_NORMAL, &tsch_broadcast_address,
+      25, 0);
   for(i = 0; i < 25; i++) {
     if(i != node_id - 1) {
       tsch_schedule_add_link(sf_cc1200,
@@ -125,13 +129,17 @@ PROCESS_THREAD(test_process, ev, data)
   tsch_schedule_add_link(sf_cc2538,
       LINK_OPTION_TX,
       LINK_TYPE_NORMAL, &tsch_broadcast_address,
-      25 + node_id - 1, 0);
+      26 + node_id - 1, 0);
+  tsch_schedule_add_link(sf_cc2538,
+      LINK_OPTION_SAMPLE_RSSI,
+      LINK_TYPE_NORMAL, &tsch_broadcast_address,
+      26 + 25, 0);
   for(i = 0; i < 25; i++) {
     if(i != node_id - 1) {
       tsch_schedule_add_link(sf_cc2538,
           LINK_OPTION_RX,
           LINK_TYPE_NORMAL, &tsch_broadcast_address,
-          25 + i, 0);
+          26 + i, 0);
     }
   }
   //tsch_schedule_add_link(sf_cc2538,

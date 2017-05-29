@@ -79,6 +79,7 @@
 #define LINK_OPTION_RX              2
 #define LINK_OPTION_SHARED          4
 #define LINK_OPTION_TIME_KEEPING    8
+#define LINK_OPTION_SAMPLE_RSSI    16
 
 /************ Types ***********/
 
