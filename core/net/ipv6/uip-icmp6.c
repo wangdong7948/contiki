@@ -65,7 +65,10 @@
 #define UIP_FIRST_EXT_BUF        ((struct uip_ext_hdr *)&uip_buf[UIP_LLIPH_LEN])
 
 #if UIP_CONF_IPV6_RPL
-#include "rpl/rpl.h"
+#include "rpl.h"
+#if UIP_CONF_IPV6_RPL_LITE == 0
+#include "rpl-private.h"
+#endif /* UIP_CONF_IPV6_RPL_LITE == 0 */
 #endif /* UIP_CONF_IPV6_RPL */
 
 /** \brief temporary IP address */
@@ -195,7 +198,7 @@ uip_icmp6_error_output(uint8_t type, uint8_t code, uint32_t param) {
   }
 
 #if UIP_CONF_IPV6_RPL
-  rpl_remove_header();
+  rpl_ext_header_remove();
 #else
   uip_ext_len = 0;
 #endif /* UIP_CONF_IPV6_RPL */

@@ -48,8 +48,10 @@
 #endif
 
 #if UIP_CONF_IPV6_RPL
-#include "net/rpl/rpl.h"
-#include "net/rpl/rpl-private.h"
+#include "rpl.h"
+#if UIP_CONF_IPV6_RPL_LITE == 0
+#include "rpl-private.h"
+#endif /* UIP_CONF_IPV6_RPL_LITE == 0 */
 #endif
 
 #include <string.h>
@@ -74,7 +76,7 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #endif
 
 #if UIP_CONF_IPV6_RPL
-#include "rpl/rpl.h"
+#include "rpl.h"
 #endif
 
 process_event_t tcpip_event;
@@ -549,7 +551,7 @@ tcpip_ipv6_output(void)
   }
 
 #if UIP_CONF_IPV6_RPL
-  if(!rpl_update_header()) {
+  if(!rpl_ext_header_update()) {
     /* Packet can not be forwarded */
     PRINTF("tcpip_ipv6_output: RPL header update error\n");
     uip_clear_buf();
@@ -560,11 +562,18 @@ tcpip_ipv6_output(void)
   if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Next hop determination */
 
+    PRINTF("tcpip_ipv6_output: looking for next hop for host ");
+    PRINT6ADDR(&UIP_IP_BUF->destipaddr);
+    PRINTF("\n");
+
 #if UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING
     uip_ipaddr_t ipaddr;
     /* Look for a RPL Source Route */
-    if(rpl_srh_get_next_hop(&ipaddr)) {
+    if(rpl_ext_header_srh_get_next_hop(&ipaddr)) {
       nexthop = &ipaddr;
+      PRINTF("tcpip_ipv6_output: selected next hop from SRH: ");
+      PRINT6ADDR(nexthop);
+      PRINTF("\n");
     }
 #endif /* UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING */
 
@@ -575,6 +584,7 @@ tcpip_ipv6_output(void)
        nexthop address. */
     if(nexthop == NULL && uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
       nexthop = &UIP_IP_BUF->destipaddr;
+      PRINTF("tcpip_ipv6_output: destination is on link\n");
     }
 
     if(nexthop == NULL) {
@@ -584,9 +594,13 @@ tcpip_ipv6_output(void)
 
       /* No route was found - we send to the default route instead. */
       if(route == NULL) {
-        PRINTF("tcpip_ipv6_output: no route found, using default route\n");
         nexthop = uip_ds6_defrt_choose();
-        if(nexthop == NULL) {
+
+        if(nexthop != NULL) {
+          PRINTF("tcpip_ipv6_output: no route found, using default route: ");
+          PRINT6ADDR(nexthop);
+          PRINTF("\n");
+        } else {
 #ifdef UIP_FALLBACK_INTERFACE
           PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n",
               uip_ext_len, *((uint8_t *)UIP_IP_BUF + 40));
@@ -608,13 +622,16 @@ tcpip_ipv6_output(void)
             return;
           }
 #else
-          PRINTF("tcpip_ipv6_output: Destination off-link but no route\n");
+          PRINTF("tcpip_ipv6_output: destination off-link but no default route\n");
 #endif /* !UIP_FALLBACK_INTERFACE */
           uip_clear_buf();
           return;
         }
 
       } else {
+        PRINTF("tcpip_ipv6_output: found next hop from routing table: ");
+        PRINT6ADDR(nexthop);
+        PRINTF("\n");
         /* A route was found, so we look up the nexthop neighbor for
            the route. */
         nexthop = uip_ds6_route_nexthop(route);
@@ -623,18 +640,17 @@ tcpip_ipv6_output(void)
            never responded to link-layer acks, we drop its route. */
         if(nexthop == NULL) {
 #if UIP_CONF_IPV6_RPL
-          /* If we are running RPL, and if we are the root of the
-             network, we'll trigger a global repair berfore we remove
-             the route. */
+#if UIP_CONF_IPV6_RPL_LITE == 0
+/* If we are running RPL, and if we are the root of the
+   network, we'll trigger a global repair berfore we remove
+   the route. Only for old RPL, as this only might happen
+   in storing mode. */
           rpl_dag_t *dag;
-          rpl_instance_t *instance;
-
           dag = (rpl_dag_t *)route->state.dag;
-          if(dag != NULL) {
-            instance = dag->instance;
-
-            rpl_repair_root(instance->instance_id);
+          if(dag != NULL && dag->instance != NULL) {
+            rpl_repair_root(dag->instance->instance_id);
           }
+#endif
 #endif /* UIP_CONF_IPV6_RPL */
           uip_ds6_route_rm(route);
 
@@ -693,8 +709,11 @@ tcpip_ipv6_output(void)
       }
 #else /* UIP_ND6_SEND_NS */
       PRINTF("tcpip_ipv6_output: neighbor not in cache\n");
+      PRINTF("DEBUG: ");
+      PRINT6ADDR(nexthop);
+      PRINTF("\n");
       uip_len = 0;
-      return;  
+      return;
 #endif /* UIP_ND6_SEND_NS */
     } else {
 #if UIP_ND6_SEND_NS
